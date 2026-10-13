@@ -1,4 +1,8 @@
-/** Client-side shrink for loan uploads — images and PDFs. Prefer smaller output. */
+/**
+ * Client-side shrink for loan uploads (images + PDFs).
+ * Output is always a smaller JPEG when possible — same Storage bucket as avatars
+ * (`avatars/loan-documents/...`) which only allows image MIME types.
+ */
 
 const MAX_EDGE = 1400;
 const JPEG_QUALITY = 0.8;
@@ -68,9 +72,9 @@ async function compressImage(file: File): Promise<File> {
   return pickSmaller(file, out);
 }
 
-async function compressPdf(file: File): Promise<File> {
+/** Render PDF pages to one JPEG (stacked) so we can store in the avatars bucket. */
+async function compressPdfToJpeg(file: File): Promise<File> {
   const pdfjs = await import("pdfjs-dist");
-  const { PDFDocument } = await import("pdf-lib");
 
   if (!pdfjs.GlobalWorkerOptions.workerSrc) {
     pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
@@ -82,8 +86,8 @@ async function compressPdf(file: File): Promise<File> {
     useSystemFonts: true,
   }).promise;
 
-  const outDoc = await PDFDocument.create();
-  const pageCount = source.numPages;
+  const pageCount = Math.max(1, source.numPages);
+  const pageCanvases: HTMLCanvasElement[] = [];
 
   for (let i = 1; i <= pageCount; i += 1) {
     const page = await source.getPage(i);
@@ -100,49 +104,54 @@ async function compressPdf(file: File): Promise<File> {
 
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-
     const renderTask = page.render({ canvasContext: ctx, viewport, canvas });
     await renderTask.promise;
-
-    let jpeg = await canvasToJpeg(canvas, JPEG_QUALITY);
-    if (jpeg.size > TARGET_MAX_BYTES / Math.max(1, Math.min(pageCount, 3))) {
-      jpeg = await canvasToJpeg(canvas, JPEG_QUALITY_FALLBACK);
-    }
-
-    const embedded = await outDoc.embedJpg(new Uint8Array(await jpeg.arrayBuffer()));
-    const pdfPage = outDoc.addPage([embedded.width, embedded.height]);
-    pdfPage.drawImage(embedded, {
-      x: 0,
-      y: 0,
-      width: embedded.width,
-      height: embedded.height,
-    });
+    pageCanvases.push(canvas);
   }
 
-  if (outDoc.getPageCount() === 0) return file;
+  if (pageCanvases.length === 0) return file;
 
-  const bytes = await outDoc.save({ useObjectStreams: true });
-  const out = new File([Uint8Array.from(bytes)], `${baseName(file)}.pdf`, {
-    type: "application/pdf",
+  const gap = 12;
+  const width = Math.max(...pageCanvases.map((c) => c.width));
+  const height = pageCanvases.reduce((sum, c) => sum + c.height, 0) + gap * (pageCanvases.length - 1);
+
+  const merged = document.createElement("canvas");
+  merged.width = width;
+  merged.height = height;
+  const ctx = merged.getContext("2d");
+  if (!ctx) return file;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, width, height);
+
+  let y = 0;
+  for (const pageCanvas of pageCanvases) {
+    const x = Math.floor((width - pageCanvas.width) / 2);
+    ctx.drawImage(pageCanvas, x, y);
+    y += pageCanvas.height + gap;
+  }
+
+  let blob = await canvasToJpeg(merged, JPEG_QUALITY);
+  if (blob.size > TARGET_MAX_BYTES) {
+    blob = await canvasToJpeg(merged, JPEG_QUALITY_FALLBACK);
+  }
+
+  const out = new File([blob], `${baseName(file)}.jpg`, {
+    type: "image/jpeg",
     lastModified: Date.now(),
   });
-  return pickSmaller(file, out);
+  // PDF → JPEG almost always smaller; still guard against tiny originals.
+  return out.size > 0 ? out : file;
 }
 
-/** Shrink any loan document (image or PDF). Never returns a larger file. */
+/** Shrink any loan document. PDFs become JPEG for Storage compatibility. */
 export async function compressLoanDocument(file: File): Promise<File> {
   try {
     if (file.type.startsWith("image/")) return await compressImage(file);
     if (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")) {
-      return await compressPdf(file);
+      return await compressPdfToJpeg(file);
     }
   } catch {
     // Fall through — upload original if compress fails.
   }
   return file;
-}
-
-/** @deprecated use compressLoanDocument */
-export async function compressLoanDocumentImage(file: File): Promise<File> {
-  return compressLoanDocument(file);
 }
