@@ -12,6 +12,10 @@ const noto = Noto_Sans_Thai({
 export const metadata: Metadata = {
   title: "dona · เกษตรกร",
   description: "แอปสำหรับเกษตรกร DONA",
+  icons: {
+    icon: "/dona-logo.png",
+    apple: "/dona-logo.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
