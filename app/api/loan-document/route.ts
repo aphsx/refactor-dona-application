@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getApiOrigin } from "@/lib/env";
 
+/** Separate from `avatars` — public bucket for loan application files. */
 const BUCKET = "loan-documents";
 const MAX_BYTES = 8_000_000;
 
@@ -75,19 +76,29 @@ export async function POST(request: NextRequest) {
       Authorization: `Bearer ${supabase.key}`,
       "Content-Type": file.type,
       "x-upsert": "true",
+      "Cache-Control": "public, max-age=31536000, immutable",
     },
     body: Buffer.from(await file.arrayBuffer()),
   });
 
   if (!upload.ok) {
     const detail = await upload.text().catch(() => "");
+    let message = "อัปโหลดเอกสารไม่สำเร็จ";
+    if (detail.includes("Bucket not found") || detail.includes("NoSuchBucket")) {
+      message = "ยังไม่มี bucket loan-documents ใน Supabase (ต้องเป็น public)";
+    } else if (detail.includes("row-level security") || detail.includes("AccessDenied")) {
+      message = "อัปโหลดไม่ได้ — ตรวจ storage policy ของ bucket loan-documents";
+    } else if (detail) {
+      message = detail.slice(0, 300);
+    }
     return NextResponse.json(
-      { error: detail || "อัปโหลดเอกสารไม่สำเร็จ" },
+      { error: message },
       { status: upload.status >= 400 ? upload.status : 502 },
     );
   }
 
-  const storagePath = `${BUCKET}/${path}`;
+  // Same pattern as avatars: store public URL so mill/farmer can open the file.
+  const storagePath = `${supabase.url}/storage/v1/object/public/${BUCKET}/${path}`;
   const apiOrigin = getApiOrigin();
   const save = await fetch(
     `${apiOrigin}/api/v1/loans/applications/${encodeURIComponent(applicationId)}/documents/${kindId}`,

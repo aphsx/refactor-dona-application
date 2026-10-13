@@ -105,46 +105,63 @@ export default function LoanDetailPage() {
                           {doc.attached ? "แนบแล้ว" : "ยังไม่แนบ"}
                         </p>
                       </div>
-                      {doc.attached ? (
-                        <CheckCircle2 className="shrink-0 text-brand" size={22} />
-                      ) : (
-                        <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl bg-brand px-3 py-2 text-[13px] font-bold text-white">
-                          <Upload size={16} />
-                          {busy ? "กำลังอัป…" : "แนบไฟล์"}
-                          <input
-                            type="file"
-                            accept="application/pdf,image/jpeg,image/png,image/webp"
-                            className="sr-only"
-                            disabled={busy}
-                            onChange={(event) => {
-                              const file = event.target.files?.[0];
-                              event.target.value = "";
-                              if (!file) return;
-                              void (async () => {
-                                setBusyKind(doc.kindId);
-                                setUploadError("");
-                                try {
-                                  const updated = await uploadLoanDocument(item.id, doc.kindId, file);
-                                  setItem((prev) =>
-                                    prev
-                                      ? {
-                                          ...prev,
-                                          documents: prev.documents.map((d) =>
-                                            d.kindId === doc.kindId ? { ...d, ...updated } : d,
-                                          ),
-                                        }
-                                      : prev,
-                                  );
-                                } catch (err) {
-                                  setUploadError(apiMessage(err));
-                                } finally {
-                                  setBusyKind(null);
-                                }
-                              })();
-                            }}
-                          />
-                        </label>
-                      )}
+                      <div className="flex shrink-0 flex-col items-end gap-2">
+                        {doc.attached && (
+                          <CheckCircle2 className="text-brand" size={22} />
+                        )}
+                        {doc.attached && doc.storagePath?.startsWith("http") && (
+                          <a
+                            href={doc.storagePath}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[13px] font-bold text-brand underline-offset-2 hover:underline"
+                          >
+                            ดูไฟล์
+                          </a>
+                        )}
+                        {!doc.attached && (
+                          <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-brand px-3 py-2 text-[13px] font-bold text-white">
+                            <Upload size={16} />
+                            {busy ? "กำลังอัป…" : "แนบไฟล์"}
+                            <input
+                              type="file"
+                              accept="application/pdf,image/jpeg,image/png,image/webp"
+                              className="sr-only"
+                              disabled={busy}
+                              onChange={(event) => {
+                                const file = event.target.files?.[0];
+                                event.target.value = "";
+                                if (!file) return;
+                                void (async () => {
+                                  setBusyKind(doc.kindId);
+                                  setUploadError("");
+                                  try {
+                                    const updated = await uploadLoanDocument(
+                                      item.id,
+                                      doc.kindId,
+                                      file,
+                                    );
+                                    setItem((prev) =>
+                                      prev
+                                        ? {
+                                            ...prev,
+                                            documents: prev.documents.map((d) =>
+                                              d.kindId === doc.kindId ? { ...d, ...updated } : d,
+                                            ),
+                                          }
+                                        : prev,
+                                    );
+                                  } catch (err) {
+                                    setUploadError(apiMessage(err));
+                                  } finally {
+                                    setBusyKind(null);
+                                  }
+                                })();
+                              }}
+                            />
+                          </label>
+                        )}
+                      </div>
                     </div>
                   </li>
                 );

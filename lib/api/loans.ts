@@ -4,6 +4,7 @@ import type {
   LoanApplicationCreateInput,
   LoanApplicationDocument,
 } from "@/lib/domain";
+import { compressLoanDocumentImage } from "@/lib/loan-document";
 
 type LoanPage<T> = {
   items: T[];
@@ -43,15 +44,17 @@ export function setLoanApplicationDocumentStorage(
   );
 }
 
-/** Upload PDF/image via Next → Supabase, then attach path on the application. */
+/** Upload PDF/image via Next → Supabase (`loan-documents`), then save public URL. */
 export async function uploadLoanDocument(applicationId: string, kindId: number, file: File) {
   const token = getAccessToken();
   if (!token) throw new Error("ต้องเข้าสู่ระบบก่อน");
 
+  const prepared = file.type.startsWith("image/") ? await compressLoanDocumentImage(file) : file;
+
   const form = new FormData();
   form.set("applicationId", applicationId);
   form.set("kindId", String(kindId));
-  form.set("file", file);
+  form.set("file", prepared);
 
   const response = await fetch("/api/loan-document", {
     method: "POST",
