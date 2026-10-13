@@ -79,7 +79,7 @@ export default function LoanDetailPage() {
           <section className="mt-8">
             <h2 className="text-[16px] font-bold text-brand-dark">เอกสารประกอบ</h2>
             <p className="mt-0.5 text-[13px] text-brand-dark/50">
-              แนบ PDF หรือรูป · จำเป็น {progress.attached}/{progress.total}
+              แนบ PDF หรือรูป (บีบอัตโนมัติ) · จำเป็น {progress.attached}/{progress.total}
             </p>
 
             {uploadError && (

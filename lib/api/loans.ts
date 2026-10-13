@@ -4,7 +4,7 @@ import type {
   LoanApplicationCreateInput,
   LoanApplicationDocument,
 } from "@/lib/domain";
-import { compressLoanDocumentImage } from "@/lib/loan-document";
+import { compressLoanDocument } from "@/lib/loan-document";
 
 type LoanPage<T> = {
   items: T[];
@@ -49,7 +49,7 @@ export async function uploadLoanDocument(applicationId: string, kindId: number, 
   const token = getAccessToken();
   if (!token) throw new Error("ต้องเข้าสู่ระบบก่อน");
 
-  const prepared = file.type.startsWith("image/") ? await compressLoanDocumentImage(file) : file;
+  const prepared = await compressLoanDocument(file);
 
   const form = new FormData();
   form.set("applicationId", applicationId);
