@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   apiMessage,
   getMyPlantingPlan,
+  PLANTING_PLAN_STATUS_DONE_ID,
   type PlantingPlanItem,
   type PlantingPlanStatus,
 } from "@/lib/api";
@@ -57,10 +58,7 @@ export default function PlanPage() {
     return map;
   }, [statuses]);
 
-  const doneStatusId = useMemo(
-    () => statuses.find((status) => status.code === "done")?.id,
-    [statuses],
-  );
+  const doneStatusId = PLANTING_PLAN_STATUS_DONE_ID; // done / เสร็จ
 
   return (
     <div className="flex min-h-full flex-col px-5 pb-8 pt-8">
@@ -84,7 +82,7 @@ export default function PlanPage() {
           <ClipboardList className="mx-auto text-brand/45" size={32} />
           <p className="mt-3 text-[15px] font-bold text-brand-dark">ยังไม่มีแผนปลูก</p>
           <p className="mt-1 text-[13px] text-brand-dark/60">
-            เมื่อโรงสีเปิดรอบปลูก งานในแผนจะแสดงที่นี่
+            เมื่อองค์กรเปิดรอบปลูก งานในแผนจะแสดงที่นี่
           </p>
         </div>
       )}

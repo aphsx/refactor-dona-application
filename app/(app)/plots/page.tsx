@@ -57,7 +57,7 @@ export default function PlotsPage() {
                 ? scope === "group"
                   ? `${plots.length} แปลงในกลุ่ม · ดูอย่างเดียว`
                   : `${plots.length} แปลงของฉัน`
-                : "แปลงของคุณที่ลงทะเบียนกับโรงสี"}
+                : "แปลงของคุณที่ลงทะเบียนไว้"}
           </p>
         </div>
         {canRegisterPlot && (

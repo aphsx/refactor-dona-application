@@ -140,7 +140,7 @@ export default function RegisterPage() {
         />
 
         <p className="rounded-2xl bg-white/70 px-3.5 py-3 text-[13px] leading-relaxed text-brand-dark/55">
-          หลังลงทะเบียนจะเข้าใช้งานได้ทันที · โรงสีสามารถจัดกลุ่มให้ทีหลัง
+          หลังลงทะเบียนจะเข้าใช้งานได้ทันที · องค์กรสามารถจัดกลุ่มให้ทีหลัง
         </p>
 
         {error && <p className="text-center text-[14px] font-semibold text-danger">{error}</p>}

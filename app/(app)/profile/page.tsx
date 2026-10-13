@@ -257,7 +257,7 @@ export default function ProfilePage() {
               />
               <InfoRow
                 icon={Weight}
-                label="ส่งเข้าโรงสีแล้ว"
+                label="ส่งแล้ว"
                 value={`${farmer?.deliveredKg ?? 0} กก.`}
                 last
               />

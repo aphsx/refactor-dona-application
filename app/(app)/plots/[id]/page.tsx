@@ -13,6 +13,7 @@ import {
   getFarmer,
   getMyPlantingPlan,
   getPlot,
+  PLANTING_PLAN_STATUS_DONE_ID,
   type Farmer,
   type PlantingPlanItem,
   type PlantingPlanStatus,
@@ -72,11 +73,8 @@ export default function PlotDetailPage() {
           const items = (plan.items ?? []).filter((item) => item.plotId === next.id);
           setPlanItems(items);
           setPlanStatuses(plan.statuses ?? []);
-          const doneId = (plan.statuses ?? []).find((s) => s.code === "done")?.id;
           setPlanPending(
-            doneId == null
-              ? items.length
-              : items.filter((item) => item.statusId !== doneId).length,
+            items.filter((item) => item.statusId !== PLANTING_PLAN_STATUS_DONE_ID).length, // done / เสร็จ
           );
         } catch (err) {
           setPlanError(apiMessage(err));
@@ -102,10 +100,7 @@ export default function PlotDetailPage() {
     return map;
   }, [planStatuses]);
 
-  const doneStatusId = useMemo(
-    () => planStatuses.find((status) => status.code === "done")?.id,
-    [planStatuses],
-  );
+  const doneStatusId = PLANTING_PLAN_STATUS_DONE_ID; // done / เสร็จ
 
   // Keep cultivation stage order on the plot timeline (not calendar interleave).
   const timelineItems = useMemo(() => {
@@ -185,7 +180,7 @@ export default function PlotDetailPage() {
                 <ClipboardList className="mx-auto text-brand/45" size={28} />
                 <p className="mt-2 text-[15px] font-bold text-brand-dark">ยังไม่มีแผนปลูกในแปลงนี้</p>
                 <p className="mt-1 text-[13px] text-brand-dark/60">
-                  เมื่อโรงสีเปิดรอบปลูก ไทม์ไลน์จะแสดงที่นี่
+                  เมื่อองค์กรเปิดรอบปลูก ไทม์ไลน์จะแสดงที่นี่
                 </p>
               </div>
             )}
@@ -301,7 +296,7 @@ export default function PlotDetailPage() {
                 <div className="flex h-full flex-col items-center justify-center text-center">
                   <MapPinned className="text-brand/50" size={32} />
                   <p className="mt-2 text-[14px] font-medium text-brand-dark/60">ยังไม่มีขอบเขตบนแผนที่</p>
-                  <p className="mt-1 text-[12px] text-brand-dark/40">ให้โรงสีวาดรูปแปลงให้คุณ</p>
+                  <p className="mt-1 text-[12px] text-brand-dark/40">ให้องค์กรวาดรูปแปลงให้คุณ</p>
                 </div>
               )}
             </div>
