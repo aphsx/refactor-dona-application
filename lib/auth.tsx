@@ -9,6 +9,7 @@ import {
   setSession as persistSession,
   type FarmerSession,
 } from "@/lib/api";
+import { authEntryPath } from "@/lib/liff";
 
 type AuthContextValue = {
   session: FarmerSession | null;
@@ -59,7 +60,7 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!ready) return;
-    if (!session) router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+    if (!session) router.replace(authEntryPath(pathname));
   }, [ready, session, router, pathname]);
 
   if (!ready || !session) {

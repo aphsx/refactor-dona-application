@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
+import { authEntryPath } from "@/lib/liff";
 
 export default function IndexPage() {
   const { session, ready } = useAuth();
@@ -10,7 +11,7 @@ export default function IndexPage() {
 
   useEffect(() => {
     if (!ready) return;
-    router.replace(session ? "/home" : "/login");
+    router.replace(session ? "/home" : authEntryPath());
   }, [ready, session, router]);
 
   return (

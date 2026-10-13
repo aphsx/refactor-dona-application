@@ -14,6 +14,12 @@ export function isLiffConfigured() {
   return Boolean(getLiffId());
 }
 
+/** Where to send logged-out users: LINE/LIFF when configured, else phone login. */
+export function authEntryPath(next?: string) {
+  const q = next ? `?next=${encodeURIComponent(next)}` : "";
+  return isLiffConfigured() ? `/line${q}` : `/login${q}`;
+}
+
 /** Init LIFF once. Returns true when running inside a LIFF context. */
 export async function ensureLiff(): Promise<boolean> {
   const liffId = getLiffId();

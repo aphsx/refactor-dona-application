@@ -24,6 +24,7 @@ import {
 } from "@/lib/api";
 import { compressAvatar } from "@/lib/avatar";
 import { useAuth } from "@/lib/auth";
+import { authEntryPath } from "@/lib/liff";
 import {
   districtOptions,
   placeLabel,
@@ -389,7 +390,7 @@ export default function ProfilePage() {
           type="button"
           onClick={() => {
             logout();
-            router.replace("/login");
+            router.replace(authEntryPath());
           }}
           className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-[#E0B0B0] bg-[#FFF6F6] text-[15px] font-bold text-[#C34E4E] transition active:scale-[0.99]"
         >

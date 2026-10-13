@@ -7,18 +7,36 @@ import { Suspense, useEffect, useState } from "react";
 import { Phone } from "lucide-react";
 import { apiMessage, formatTelInput, loginByPhone } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { isLiffConfigured } from "@/lib/liff";
 
 function LoginForm() {
   const { session, ready, setSession } = useAuth();
   const router = useRouter();
   const search = useSearchParams();
+  const next = search.get("next") || "/home";
+  const forcePhone = search.get("phone") === "1";
   const [tel, setTel] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const lineReady = isLiffConfigured();
 
   useEffect(() => {
-    if (ready && session) router.replace(search.get("next") || "/home");
-  }, [ready, session, router, search]);
+    if (ready && session) router.replace(next);
+  }, [ready, session, router, next]);
+
+  // Prefer LINE when LIFF is set. Use /login?phone=1 for browser phone login.
+  useEffect(() => {
+    if (!ready || session || !lineReady || forcePhone) return;
+    router.replace(`/line?next=${encodeURIComponent(next)}`);
+  }, [ready, session, lineReady, forcePhone, router, next]);
+
+  if (lineReady && !forcePhone) {
+    return (
+      <div className="mx-auto flex min-h-full w-full max-w-lg items-center justify-center bg-brand-light px-6 py-10 text-brand-dark/60">
+        กำลังพาไปเข้าสู่ระบบด้วย LINE…
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto flex min-h-full w-full max-w-lg items-center justify-center bg-brand-light px-6 py-10">
@@ -46,7 +64,7 @@ function LoginForm() {
               try {
                 const next = await loginByPhone(tel);
                 setSession(next);
-                router.replace(search.get("next") || "/home");
+                router.replace(next);
               } catch (err) {
                 setError(apiMessage(err));
               } finally {
