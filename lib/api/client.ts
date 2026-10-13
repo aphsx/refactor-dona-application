@@ -86,5 +86,6 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
 
 export function apiMessage(error: unknown) {
   if (error instanceof ApiError) return error.message;
+  if (error instanceof Error && error.message.trim()) return error.message;
   return "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้";
 }
