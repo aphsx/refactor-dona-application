@@ -129,7 +129,7 @@ function LineEntry() {
         <div className="mt-8 w-full">
           <h1 className="text-center text-[24px] font-bold text-brand-dark">ยินดีต้อนรับ</h1>
           <p className="mt-2 text-center text-[14px] text-brand-dark/65">
-            ไม่ต้องใส่เบอร์ — กดเริ่มใช้งานด้วย LINE ได้เลย
+            เข้าใช้งานด้วย LINE ได้เลย หรือผูกเบอร์หากเคยลงทะเบียนไว้แล้ว
           </p>
           <button
             type="button"
@@ -142,7 +142,7 @@ function LineEntry() {
             href={`/line/link?next=${encodeURIComponent(next)}`}
             className="mt-3 flex h-14 w-full items-center justify-center rounded-2xl border border-brand/20 bg-white text-[15px] font-bold text-brand"
           >
-            เคยมีบัญชีเบอร์แล้ว — ผูกกับ LINE (ไม่บังคับ)
+            เคยลงทะเบียนด้วยเบอร์แล้ว — ผูกบัญชี
           </Link>
         </div>
       )}

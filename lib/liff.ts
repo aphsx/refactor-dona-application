@@ -20,25 +20,6 @@ export function authEntryPath(next?: string) {
   return isLiffConfigured() ? `/line${q}` : `/login${q}`;
 }
 
-function liffErrorMessage(err: unknown, liffId: string) {
-  const raw =
-    err && typeof err === "object" && "message" in err
-      ? String((err as { message?: unknown }).message)
-      : err instanceof Error
-        ? err.message
-        : String(err ?? "");
-  const lower = raw.toLowerCase();
-  if (lower.includes("channel not found") || lower.includes("invalid liff id")) {
-    return (
-      `LINE ไม่รู้จัก LIFF นี้ (channel not found). ` +
-      `ตรวจว่า NEXT_PUBLIC_LIFF_ID ตรงกับ LIFF ในช่อง LINE Login ` +
-      `และกด Redeploy หลังแก้ env (ค่า NEXT_PUBLIC_* ถูกใส่ตอน build). ` +
-      `LIFF ที่แอปใช้ตอนนี้: ${liffId}`
-    );
-  }
-  return raw || "เริ่ม LIFF ไม่สำเร็จ";
-}
-
 /** Init LIFF once. Returns true when running inside a LIFF context. */
 export async function ensureLiff(): Promise<boolean> {
   const liffId = getLiffId();
@@ -49,7 +30,7 @@ export async function ensureLiff(): Promise<boolean> {
       .then(() => true)
       .catch((err) => {
         initPromise = null;
-        throw new Error(liffErrorMessage(err, liffId));
+        throw err;
       });
   }
   return initPromise;
