@@ -62,8 +62,8 @@ function LoginForm() {
               setBusy(true);
               setError("");
               try {
-                const next = await loginByPhone(tel);
-                setSession(next);
+                const session = await loginByPhone(tel);
+                setSession(session);
                 router.replace(next);
               } catch (err) {
                 setError(apiMessage(err));
