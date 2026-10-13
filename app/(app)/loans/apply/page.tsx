@@ -4,22 +4,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
-import { apiMessage, createLoanApplication } from "@/lib/api";
-
-function formatNationalId(value: string) {
-  const digits = value.replace(/\D/g, "").slice(0, 13);
-  if (digits.length <= 1) return digits;
-  if (digits.length <= 5) return `${digits.slice(0, 1)}-${digits.slice(1)}`;
-  if (digits.length <= 10) return `${digits.slice(0, 1)}-${digits.slice(1, 5)}-${digits.slice(5)}`;
-  if (digits.length <= 12) {
-    return `${digits.slice(0, 1)}-${digits.slice(1, 5)}-${digits.slice(5, 10)}-${digits.slice(10)}`;
-  }
-  return `${digits.slice(0, 1)}-${digits.slice(1, 5)}-${digits.slice(5, 10)}-${digits.slice(10, 12)}-${digits.slice(12)}`;
-}
+import { apiMessage, createLoanApplication, formatNationalId } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 
 export default function LoanApplyPage() {
   const router = useRouter();
-  const [nationalId, setNationalId] = useState("");
+  const { session } = useAuth();
+  const [nationalId, setNationalId] = useState(() =>
+    formatNationalId(session?.farmer?.nationalId || session?.nationalId || ""),
+  );
   const [amount, setAmount] = useState("");
   const [purpose, setPurpose] = useState("");
   const [error, setError] = useState("");

@@ -4,8 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { Phone } from "lucide-react";
-import { apiMessage, formatTelInput, loginByPhone } from "@/lib/api";
+import { IdCard } from "lucide-react";
+import { apiMessage, formatNationalId, loginByNationalId } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { isLiffConfigured } from "@/lib/liff";
 
@@ -14,8 +14,8 @@ function LoginForm() {
   const router = useRouter();
   const search = useSearchParams();
   const next = search.get("next") || "/home";
-  const forcePhone = search.get("phone") === "1";
-  const [tel, setTel] = useState("");
+  const forceDirect = search.get("phone") === "1" || search.get("direct") === "1";
+  const [nationalId, setNationalId] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const lineReady = isLiffConfigured();
@@ -24,13 +24,13 @@ function LoginForm() {
     if (ready && session) router.replace(next);
   }, [ready, session, router, next]);
 
-  // Prefer LINE when LIFF is set. Use /login?phone=1 for browser phone login.
+  // Prefer LINE when LIFF is set. Use /login?direct=1 for browser national-id login.
   useEffect(() => {
-    if (!ready || session || !lineReady || forcePhone) return;
+    if (!ready || session || !lineReady || forceDirect) return;
     router.replace(`/line?next=${encodeURIComponent(next)}`);
-  }, [ready, session, lineReady, forcePhone, router, next]);
+  }, [ready, session, lineReady, forceDirect, router, next]);
 
-  if (lineReady && !forcePhone) {
+  if (lineReady && !forceDirect) {
     return (
       <div className="mx-auto flex min-h-full w-full max-w-lg items-center justify-center bg-brand-light px-6 py-10 text-brand-dark/60">
         กำลังพาไปเข้าสู่ระบบด้วย LINE…
@@ -51,7 +51,9 @@ function LoginForm() {
             priority
           />
           <h1 className="mt-6 text-center text-[28px] font-bold text-brand-dark">ยินดีต้อนรับ</h1>
-          <p className="mt-2 text-center text-[16px] text-brand-dark/70">ใส่เบอร์โทรเพื่อเข้าใช้งาน</p>
+          <p className="mt-2 text-center text-[16px] text-brand-dark/70">
+            ใส่เลขบัตรประชาชนเพื่อเข้าใช้งาน
+          </p>
         </div>
 
         <form
@@ -62,7 +64,7 @@ function LoginForm() {
               setBusy(true);
               setError("");
               try {
-                const session = await loginByPhone(tel);
+                const session = await loginByNationalId(nationalId);
                 setSession(session);
                 router.replace(next);
               } catch (err) {
@@ -74,16 +76,16 @@ function LoginForm() {
           }}
         >
           <label className="block">
-            <span className="sr-only">เบอร์โทรศัพท์</span>
+            <span className="sr-only">เลขบัตรประชาชน</span>
             <div className="flex h-14 items-center gap-3 rounded-2xl border border-brand/15 bg-white px-4 shadow-sm">
-              <Phone size={20} className="text-brand/70" />
+              <IdCard size={20} className="text-brand/70" />
               <input
                 autoFocus
-                inputMode="tel"
-                autoComplete="tel"
-                placeholder="0XX-XXX-XXXX"
-                value={tel}
-                onChange={(event) => setTel(formatTelInput(event.target.value))}
+                inputMode="numeric"
+                autoComplete="off"
+                placeholder="X-XXXX-XXXXX-XX-X"
+                value={nationalId}
+                onChange={(event) => setNationalId(formatNationalId(event.target.value))}
                 className="h-full w-full bg-transparent text-[16px] text-brand-dark placeholder:text-brand-dark/35"
               />
             </div>
@@ -93,7 +95,7 @@ function LoginForm() {
 
           <button
             type="submit"
-            disabled={busy || tel.replace(/\D/g, "").length < 10}
+            disabled={busy || nationalId.replace(/\D/g, "").length !== 13}
             className="mt-6 flex h-14 w-full items-center justify-center rounded-2xl bg-brand text-[16px] font-bold text-white shadow disabled:bg-brand/35"
           >
             {busy ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}

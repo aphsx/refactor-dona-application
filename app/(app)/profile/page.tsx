@@ -5,22 +5,25 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Camera,
+  IdCard,
   LogOut,
   MapPinned,
   Pencil,
-  Phone,
   Users,
   Weight,
   X,
 } from "lucide-react";
 import {
   apiMessage,
-  formatTelInput,
+  farmerDisplayName,
+  formatNationalId,
   getFarmer,
   getGroup,
+  listNamePrefixes,
   updateFarmer,
   uploadFarmerAvatar,
   type Farmer,
+  type NamePrefix,
 } from "@/lib/api";
 import { compressAvatar } from "@/lib/avatar";
 import { useAuth } from "@/lib/auth";
@@ -43,10 +46,14 @@ export default function ProfilePage() {
   const [busy, setBusy] = useState(false);
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [notice, setNotice] = useState("");
+  const [prefixes, setPrefixes] = useState<NamePrefix[]>([]);
 
+  const [prefixId, setPrefixId] = useState(0);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [tel, setTel] = useState("");
+  const [nationalId, setNationalId] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [farmerNumber, setFarmerNumber] = useState("");
   const [address, setAddress] = useState("");
   const [provinceId, setProvinceId] = useState(0);
   const [districtId, setDistrictId] = useState(0);
@@ -54,8 +61,28 @@ export default function ProfilePage() {
 
   const canEdit = session?.role === "member" || session?.role === "leader";
   const roleLabel = session?.role === "leader" ? "หัวหน้ากลุ่ม" : "สมาชิก";
-  const displayName = session?.displayName?.trim() || "ผู้ใช้งาน";
+  const displayName =
+    (farmer ? farmerDisplayName(farmer) : "") ||
+    session?.displayName?.trim() ||
+    "ผู้ใช้งาน";
   const avatarSrc = farmer?.avatarUrl || "/images/account-icon.png";
+  const nationalIdDisplay = formatNationalId(
+    farmer?.nationalId || session?.nationalId || "",
+  );
+
+  useEffect(() => {
+    void listNamePrefixes()
+      .then(setPrefixes)
+      .catch(() => {
+        setPrefixes([
+          { id: 601, name: "นาย" },
+          { id: 602, name: "นาง" },
+          { id: 603, name: "นางสาว" },
+          { id: 604, name: "เด็กชาย" },
+          { id: 605, name: "เด็กหญิง" },
+        ]);
+      });
+  }, []);
 
   useEffect(() => {
     if (!session) return;
@@ -65,15 +92,16 @@ export default function ProfilePage() {
       try {
         const next = await getFarmer(farmerId);
         setFarmer(next);
+        const nextName = farmerDisplayName(next);
         if (
           current.farmer.avatarUrl !== next.avatarUrl ||
-          current.tel !== next.tel ||
-          current.displayName !== `${next.firstName} ${next.lastName}`.trim()
+          current.nationalId !== next.nationalId ||
+          current.displayName !== nextName
         ) {
           setSession({
             ...current,
-            displayName: `${next.firstName} ${next.lastName}`.trim(),
-            tel: next.tel,
+            displayName: nextName,
+            nationalId: next.nationalId,
             farmer: next,
           });
         }
@@ -81,7 +109,7 @@ export default function ProfilePage() {
           const group = await getGroup(next.groupId);
           setGroupName(group.name);
         } else {
-          setGroupName("ไม่มีกลุ่ม");
+          setGroupName(next.groupName || "ไม่มีกลุ่ม");
         }
       } catch (err) {
         setError(apiMessage(err));
@@ -93,9 +121,12 @@ export default function ProfilePage() {
 
   function startEdit() {
     if (!farmer) return;
+    setPrefixId(farmer.prefixId ?? 0);
     setFirstName(farmer.firstName);
     setLastName(farmer.lastName);
-    setTel(farmer.tel);
+    setNationalId(formatNationalId(farmer.nationalId));
+    setDateOfBirth(farmer.dateOfBirth?.slice(0, 10) || "");
+    setFarmerNumber(farmer.farmerNumber || "");
     setAddress(farmer.address);
     setProvinceId(farmer.provinceId);
     setDistrictId(farmer.districtId);
@@ -117,8 +148,8 @@ export default function ProfilePage() {
       setSession({
         ...session,
         farmer: next,
-        displayName: `${next.firstName} ${next.lastName}`.trim(),
-        tel: next.tel,
+        displayName: farmerDisplayName(next),
+        nationalId: next.nationalId,
       });
       setNotice("อัปเดตรูปโปรไฟล์แล้ว");
     } catch (err) {
@@ -211,8 +242,8 @@ export default function ProfilePage() {
                   {roleLabel}
                 </span>
                 <span className="inline-flex items-center gap-1 text-[13px] font-medium text-brand-dark/55">
-                  <Phone size={13} />
-                  {farmer?.tel ?? session?.tel ?? "—"}
+                  <IdCard size={13} />
+                  {nationalIdDisplay || "—"}
                 </span>
               </div>
               {canEdit && !editing && (
@@ -267,12 +298,26 @@ export default function ProfilePage() {
 
           <section className="relative mt-4 px-5">
             <div className="overflow-hidden rounded-[24px] border border-brand/[0.08] bg-white shadow-[0_10px_24px_rgba(15,73,59,0.06)]">
+              <DetailLine label="คำนำหน้า" value={farmer?.prefixName || "—"} />
               <DetailLine label="ชื่อ" value={farmer?.firstName || "—"} />
               <DetailLine label="นามสกุล" value={farmer?.lastName || "—"} />
-              <DetailLine label="เบอร์โทร" value={farmer?.tel || "—"} last />
+              <DetailLine
+                label="เลขบัตรประชาชน"
+                value={nationalIdDisplay || "—"}
+              />
+              <DetailLine
+                label="วันเดือนปีเกิด"
+                value={farmer?.dateOfBirth?.slice(0, 10) || "—"}
+              />
+              <DetailLine
+                label="เลขเกษตรกร"
+                value={farmer?.farmerNumber || "—"}
+                last
+              />
             </div>
             <p className="mt-3 px-1 text-[12px] leading-relaxed text-brand-dark/45">
-              แก้ได้: รูปโปรไฟล์ ชื่อ นามสกุล เบอร์ ที่อยู่ และที่ตั้ง · กลุ่ม/ยอดส่งแก้ไม่ได้จากแอปนี้
+              แก้ได้: รูปโปรไฟล์ คำนำหน้า ชื่อ นามสกุล เลขบัตรประชาชน วันเดือนปีเกิด เลขเกษตรกร
+              ที่อยู่ และที่ตั้ง · กลุ่ม/ยอดส่งแก้ไม่ได้จากแอปนี้
             </p>
           </section>
         </>
@@ -282,16 +327,23 @@ export default function ProfilePage() {
             className="space-y-3 rounded-[24px] border border-brand/[0.08] bg-white p-5 shadow-[0_10px_24px_rgba(15,73,59,0.06)]"
             onSubmit={(event) => {
               event.preventDefault();
-              if (!session || !farmer) return;
+              if (!session || !farmer || !prefixId || !dateOfBirth) return;
+              if (nationalId.replace(/\D/g, "").length !== 13) {
+                setError("กรุณากรอกเลขบัตรประชาชน 13 หลัก");
+                return;
+              }
               void (async () => {
                 setBusy(true);
                 setError("");
                 setNotice("");
                 try {
                   const next = await updateFarmer(session.farmerId, {
+                    prefixId,
                     firstName,
                     lastName,
-                    tel,
+                    nationalId,
+                    dateOfBirth,
+                    farmerNumber: farmerNumber.trim() || undefined,
                     address,
                     provinceId,
                     districtId,
@@ -301,8 +353,8 @@ export default function ProfilePage() {
                   setFarmer(next);
                   setSession({
                     ...session,
-                    tel: next.tel,
-                    displayName: `${next.firstName} ${next.lastName}`.trim(),
+                    nationalId: next.nationalId,
+                    displayName: farmerDisplayName(next),
                     farmer: next,
                   });
                   setEditing(false);
@@ -316,14 +368,34 @@ export default function ProfilePage() {
             }}
           >
             <p className="text-[15px] font-bold text-brand-dark">แก้ไขข้อมูล</p>
+            <SelectField
+              label="คำนำหน้า"
+              value={prefixId || ""}
+              onChange={(value) => setPrefixId(Number(value) || 0)}
+              options={prefixes.map((item) => ({ value: item.id, label: item.name }))}
+              placeholder="เลือกคำนำหน้า"
+              required
+            />
             <Field label="ชื่อ" value={firstName} onChange={setFirstName} required />
             <Field label="นามสกุล" value={lastName} onChange={setLastName} required />
             <Field
-              label="เบอร์โทร"
-              value={tel}
-              onChange={(value) => setTel(formatTelInput(value))}
-              inputMode="tel"
+              label="เลขบัตรประชาชน"
+              value={nationalId}
+              onChange={(value) => setNationalId(formatNationalId(value))}
+              inputMode="numeric"
               required
+            />
+            <Field
+              label="วันเดือนปีเกิด"
+              value={dateOfBirth}
+              onChange={setDateOfBirth}
+              type="date"
+              required
+            />
+            <Field
+              label="เลขเกษตรกร"
+              value={farmerNumber}
+              onChange={setFarmerNumber}
             />
             <Field label="ที่อยู่" value={address} onChange={setAddress} required />
 
@@ -337,6 +409,7 @@ export default function ProfilePage() {
               }}
               options={provinceOptions()}
               placeholder="เลือกจังหวัด"
+              required
             />
             <SelectField
               label="อำเภอ"
@@ -348,6 +421,7 @@ export default function ProfilePage() {
               }}
               options={districts}
               placeholder="เลือกอำเภอ"
+              required
             />
             <SelectField
               label="ตำบล"
@@ -356,6 +430,7 @@ export default function ProfilePage() {
               onChange={(value) => setSubdistrictId(Number(value) || 0)}
               options={subdistricts}
               placeholder="เลือกตำบล"
+              required
             />
 
             <div className="rounded-2xl bg-brand-light px-3.5 py-3 text-[13px] text-brand-dark/60">
@@ -459,20 +534,26 @@ function Field({
   onChange,
   required,
   inputMode,
+  type,
+  placeholder,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   required?: boolean;
   inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  type?: string;
+  placeholder?: string;
 }) {
   return (
     <label className="block text-[13px] font-bold text-brand-dark/70">
       {label}
       {required && <span className="text-danger"> *</span>}
       <input
+        type={type || "text"}
         value={value}
         inputMode={inputMode}
+        placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
         className="mt-1 h-11 w-full rounded-xl border border-brand/15 bg-brand-light/40 px-3 text-[14px] font-normal text-brand-dark outline-none focus:border-brand/35"
       />
@@ -487,6 +568,7 @@ function SelectField({
   options,
   placeholder,
   disabled,
+  required,
 }: {
   label: string;
   value: string | number;
@@ -494,10 +576,12 @@ function SelectField({
   options: { value: string | number; label: string }[];
   placeholder: string;
   disabled?: boolean;
+  required?: boolean;
 }) {
   return (
     <label className="block text-[13px] font-bold text-brand-dark/70">
       {label}
+      {required && <span className="text-danger"> *</span>}
       <select
         className="mt-1 h-11 w-full rounded-xl border border-brand/15 bg-brand-light/40 px-3 text-[14px] font-normal outline-none focus:border-brand/35 disabled:opacity-50"
         value={value}

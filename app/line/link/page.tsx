@@ -4,8 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { Phone } from "lucide-react";
-import { apiMessage, formatTelInput, linkLineAccount } from "@/lib/api";
+import { IdCard } from "lucide-react";
+import { apiMessage, formatNationalId, linkLineAccount } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { clearLineIdToken, getLiffIdToken, peekLineIdToken } from "@/lib/liff";
 
@@ -14,7 +14,7 @@ function LineLinkForm() {
   const router = useRouter();
   const search = useSearchParams();
   const next = search.get("next") || "/home";
-  const [tel, setTel] = useState("");
+  const [nationalId, setNationalId] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [idToken, setIdToken] = useState<string | null>(null);
@@ -47,7 +47,7 @@ function LineLinkForm() {
           />
           <h1 className="mt-6 text-center text-[26px] font-bold text-brand-dark">ผูกบัญชีเดิม</h1>
           <p className="mt-2 text-center text-[15px] text-brand-dark/70">
-            กรอกเบอร์ที่โรงสีหรือเว็บเคยลงทะเบียนไว้ — ครั้งเดียว จากนั้นเข้าด้วย LINE ได้เลย
+            กรอกเลขบัตรประชาชนที่โรงสีหรือเว็บเคยลงทะเบียนไว้ — ครั้งเดียว จากนั้นเข้าด้วย LINE ได้เลย
           </p>
         </div>
 
@@ -60,7 +60,7 @@ function LineLinkForm() {
               setBusy(true);
               setError("");
               try {
-                const nextSession = await linkLineAccount(idToken, tel);
+                const nextSession = await linkLineAccount(idToken, nationalId);
                 clearLineIdToken();
                 setSession(nextSession);
                 router.replace(next);
@@ -73,16 +73,16 @@ function LineLinkForm() {
           }}
         >
           <label className="block">
-            <span className="sr-only">เบอร์โทรศัพท์</span>
+            <span className="sr-only">เลขบัตรประชาชน</span>
             <div className="flex h-14 items-center gap-3 rounded-2xl border border-brand/15 bg-white px-4 shadow-sm">
-              <Phone size={20} className="text-brand/70" />
+              <IdCard size={20} className="text-brand/70" />
               <input
                 autoFocus
-                inputMode="tel"
-                autoComplete="tel"
-                placeholder="0XX-XXX-XXXX"
-                value={tel}
-                onChange={(event) => setTel(formatTelInput(event.target.value))}
+                inputMode="numeric"
+                autoComplete="off"
+                placeholder="X-XXXX-XXXXX-XX-X"
+                value={nationalId}
+                onChange={(event) => setNationalId(formatNationalId(event.target.value))}
                 className="h-full w-full bg-transparent text-[16px] text-brand-dark placeholder:text-brand-dark/35"
               />
             </div>
@@ -92,7 +92,7 @@ function LineLinkForm() {
 
           <button
             type="submit"
-            disabled={busy || !idToken || tel.replace(/\D/g, "").length < 10}
+            disabled={busy || !idToken || nationalId.replace(/\D/g, "").length !== 13}
             className="mt-6 flex h-14 w-full items-center justify-center rounded-2xl bg-brand text-[16px] font-bold text-white shadow disabled:bg-brand/35"
           >
             {busy ? "กำลังผูกบัญชี…" : "ผูกบัญชีแล้วเข้าใช้งาน"}

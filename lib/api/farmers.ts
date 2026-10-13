@@ -15,7 +15,10 @@ export async function getFarmer(id: string) {
 export async function updateFarmer(id: string, input: FarmerUpdateInput) {
   return apiRequest<Farmer>(`/farmers/${id}`, {
     method: "PUT",
-    body: JSON.stringify(input),
+    body: JSON.stringify({
+      ...input,
+      nationalId: input.nationalId.replace(/\D/g, ""),
+    }),
   });
 }
 

@@ -9,7 +9,9 @@ export {
   setSession,
 } from "@/lib/api/client";
 
-export { linkLineAccount, loginByLine, loginByPhone, registerFarmer } from "@/lib/api/auth";
+export { linkLineAccount, loginByLine, loginByNationalId, registerFarmer } from "@/lib/api/auth";
+
+export { listNamePrefixes } from "@/lib/api/name-prefixes";
 
 export {
   createLoanApplication,
@@ -47,6 +49,7 @@ export type {
   LoanApplication,
   LoanApplicationCreateInput,
   LoanApplicationDocument,
+  NamePrefix,
   PlantingPlan,
   PlantingPlanItem,
   PlantingPlanStatus,
@@ -61,7 +64,7 @@ export {
   PLANTING_PLAN_STATUS_PENDING_ID,
   farmerDisplayName,
   formatAreaRai,
-  formatTelInput,
+  formatNationalId,
   formatThaiDate,
   isLoanDocumentRequired,
   loanRequiredDocumentProgress,

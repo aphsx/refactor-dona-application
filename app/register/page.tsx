@@ -4,7 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { apiMessage, formatTelInput, registerFarmer } from "@/lib/api";
+import {
+  apiMessage,
+  formatNationalId,
+  listNamePrefixes,
+  registerFarmer,
+  type NamePrefix,
+} from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import {
   districtOptions,
@@ -16,9 +22,13 @@ export default function RegisterPage() {
   const { session, ready, setSession } = useAuth();
   const router = useRouter();
 
+  const [prefixes, setPrefixes] = useState<NamePrefix[]>([]);
+  const [prefixId, setPrefixId] = useState(0);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [tel, setTel] = useState("");
+  const [nationalId, setNationalId] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [farmerNumber, setFarmerNumber] = useState("");
   const [address, setAddress] = useState("");
   const [provinceId, setProvinceId] = useState(0);
   const [districtId, setDistrictId] = useState(0);
@@ -30,6 +40,26 @@ export default function RegisterPage() {
     if (ready && session) router.replace("/home");
   }, [ready, session, router]);
 
+  useEffect(() => {
+    void (async () => {
+      try {
+        const items = await listNamePrefixes();
+        setPrefixes(items);
+        if (items.length > 0) setPrefixId((current) => current || items[0].id);
+      } catch {
+        // Prefixed defaults still work if catalog is briefly unavailable.
+        setPrefixes([
+          { id: 601, name: "นาย" },
+          { id: 602, name: "นาง" },
+          { id: 603, name: "นางสาว" },
+          { id: 604, name: "เด็กชาย" },
+          { id: 605, name: "เด็กหญิง" },
+        ]);
+        setPrefixId((current) => current || 601);
+      }
+    })();
+  }, []);
+
   const districts = useMemo(() => districtOptions(provinceId), [provinceId]);
   const subdistricts = useMemo(
     () => subdistrictOptions(provinceId, districtId),
@@ -37,9 +67,11 @@ export default function RegisterPage() {
   );
 
   const canSubmit =
+    prefixId > 0 &&
     firstName.trim() &&
     lastName.trim() &&
-    tel.replace(/\D/g, "").length >= 10 &&
+    nationalId.replace(/\D/g, "").length === 13 &&
+    dateOfBirth &&
     address.trim() &&
     provinceId > 0 &&
     districtId > 0 &&
@@ -74,9 +106,12 @@ export default function RegisterPage() {
             setError("");
             try {
               const next = await registerFarmer({
+                prefixId,
                 firstName: firstName.trim(),
                 lastName: lastName.trim(),
-                tel,
+                nationalId,
+                dateOfBirth,
+                farmerNumber: farmerNumber.trim() || undefined,
                 address: address.trim(),
                 provinceId,
                 districtId,
@@ -92,16 +127,36 @@ export default function RegisterPage() {
           })();
         }}
       >
+        <SelectField
+          label="คำนำหน้า"
+          value={prefixId || ""}
+          onChange={(value) => setPrefixId(Number(value) || 0)}
+          options={prefixes.map((item) => ({ value: item.id, label: item.name }))}
+          placeholder="เลือกคำนำหน้า"
+          required
+        />
         <Field label="ชื่อ" value={firstName} onChange={setFirstName} required />
         <Field label="นามสกุล" value={lastName} onChange={setLastName} required />
         <Field
-          label="เบอร์โทร"
-          value={tel}
-          onChange={(value) => setTel(formatTelInput(value))}
-          inputMode="tel"
-          placeholder="0XX-XXX-XXXX"
-          autoComplete="tel"
+          label="เลขบัตรประชาชน"
+          value={nationalId}
+          onChange={(value) => setNationalId(formatNationalId(value))}
+          inputMode="numeric"
+          placeholder="X-XXXX-XXXXX-XX-X"
+          autoComplete="off"
           required
+        />
+        <Field
+          label="วันเดือนปีเกิด"
+          value={dateOfBirth}
+          onChange={setDateOfBirth}
+          type="date"
+          required
+        />
+        <Field
+          label="เลขเกษตรกร"
+          value={farmerNumber}
+          onChange={setFarmerNumber}
         />
         <Field label="ที่อยู่" value={address} onChange={setAddress} required />
 
@@ -172,6 +227,7 @@ function Field({
   inputMode,
   placeholder,
   autoComplete,
+  type,
 }: {
   label: string;
   value: string;
@@ -180,12 +236,14 @@ function Field({
   inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
   placeholder?: string;
   autoComplete?: string;
+  type?: string;
 }) {
   return (
     <label className="block text-[13px] font-bold text-brand-dark/70">
       {label}
       {required && <span className="text-danger"> *</span>}
       <input
+        type={type || "text"}
         value={value}
         inputMode={inputMode}
         placeholder={placeholder}
