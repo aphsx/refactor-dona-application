@@ -67,7 +67,9 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
     if (
       response.status === 401 &&
       path !== "/auth/login/phone" &&
-      path !== "/auth/register"
+      path !== "/auth/register" &&
+      path !== "/auth/line" &&
+      path !== "/auth/line/link"
     ) {
       clearSession();
     }

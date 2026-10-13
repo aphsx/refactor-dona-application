@@ -9,7 +9,15 @@ export {
   setSession,
 } from "@/lib/api/client";
 
-export { loginByPhone, registerFarmer } from "@/lib/api/auth";
+export { linkLineAccount, loginByLine, loginByPhone, registerFarmer } from "@/lib/api/auth";
+
+export {
+  createLoanApplication,
+  getLoanApplication,
+  listMyLoanApplications,
+  setLoanApplicationDocumentStorage,
+  uploadLoanDocument,
+} from "@/lib/api/loans";
 
 export {
   getFarmer,
@@ -36,6 +44,9 @@ export type {
   FarmerRegisterInput,
   FarmerSession,
   FarmerUpdateInput,
+  LoanApplication,
+  LoanApplicationCreateInput,
+  LoanApplicationDocument,
   PlantingPlan,
   PlantingPlanItem,
   PlantingPlanStatus,
@@ -45,10 +56,13 @@ export type {
 } from "@/lib/domain";
 
 export {
+  LOAN_REQUIRED_DOCUMENT_KIND_IDS,
   PLANTING_PLAN_STATUS_DONE_ID,
   PLANTING_PLAN_STATUS_PENDING_ID,
   farmerDisplayName,
   formatAreaRai,
   formatTelInput,
   formatThaiDate,
+  isLoanDocumentRequired,
+  loanRequiredDocumentProgress,
 } from "@/lib/domain";
