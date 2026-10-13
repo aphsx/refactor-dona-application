@@ -4,26 +4,11 @@
  * (`avatars/loan-documents/...`) which only allows image MIME types.
  */
 
+import imageCompression from "browser-image-compression";
+
 const MAX_EDGE = 1400;
 const JPEG_QUALITY = 0.8;
-const JPEG_QUALITY_FALLBACK = 0.68;
-const TARGET_MAX_BYTES = 1_200_000;
-
-function loadImage(file: File): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const image = new Image();
-    image.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve(image);
-    };
-    image.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error("อ่านรูปไม่สำเร็จ"));
-    };
-    image.src = url;
-  });
-}
+const TARGET_MAX_MB = 1.2;
 
 function canvasToJpeg(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
   return new Promise((resolve, reject) => {
@@ -46,26 +31,33 @@ function pickSmaller(original: File, candidate: File): File {
   return candidate.size > 0 && candidate.size < original.size ? candidate : original;
 }
 
+async function asJpegFile(blob: Blob, name: string): Promise<File> {
+  const file = new File([blob], `${name}.jpg`, {
+    type: "image/jpeg",
+    lastModified: Date.now(),
+  });
+  const compressed = await imageCompression(file, {
+    maxSizeMB: TARGET_MAX_MB,
+    maxWidthOrHeight: MAX_EDGE,
+    fileType: "image/jpeg",
+    initialQuality: JPEG_QUALITY,
+    useWebWorker: true,
+  });
+  return new File([compressed], `${name}.jpg`, {
+    type: "image/jpeg",
+    lastModified: Date.now(),
+  });
+}
+
 async function compressImage(file: File): Promise<File> {
-  const image = await loadImage(file);
-  const longest = Math.max(image.naturalWidth, image.naturalHeight);
-  const scale = longest > MAX_EDGE ? MAX_EDGE / longest : 1;
-  const width = Math.max(1, Math.round(image.naturalWidth * scale));
-  const height = Math.max(1, Math.round(image.naturalHeight * scale));
-
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return file;
-  ctx.drawImage(image, 0, 0, width, height);
-
-  let blob = await canvasToJpeg(canvas, JPEG_QUALITY);
-  if (blob.size > TARGET_MAX_BYTES) {
-    blob = await canvasToJpeg(canvas, JPEG_QUALITY_FALLBACK);
-  }
-
-  const out = new File([blob], `${baseName(file)}.jpg`, {
+  const compressed = await imageCompression(file, {
+    maxSizeMB: TARGET_MAX_MB,
+    maxWidthOrHeight: MAX_EDGE,
+    fileType: "image/jpeg",
+    initialQuality: JPEG_QUALITY,
+    useWebWorker: true,
+  });
+  const out = new File([compressed], `${baseName(file)}.jpg`, {
     type: "image/jpeg",
     lastModified: Date.now(),
   });
@@ -130,15 +122,8 @@ async function compressPdfToJpeg(file: File): Promise<File> {
     y += pageCanvas.height + gap;
   }
 
-  let blob = await canvasToJpeg(merged, JPEG_QUALITY);
-  if (blob.size > TARGET_MAX_BYTES) {
-    blob = await canvasToJpeg(merged, JPEG_QUALITY_FALLBACK);
-  }
-
-  const out = new File([blob], `${baseName(file)}.jpg`, {
-    type: "image/jpeg",
-    lastModified: Date.now(),
-  });
+  const blob = await canvasToJpeg(merged, JPEG_QUALITY);
+  const out = await asJpegFile(blob, baseName(file));
   // PDF → JPEG almost always smaller; still guard against tiny originals.
   return out.size > 0 ? out : file;
 }

@@ -1,7 +1,11 @@
+import imageCompression from "browser-image-compression";
+
 const AVATAR_SIZE = 128;
 const WEBP_QUALITY = 0.72;
+/** Stay under Next `/api/avatar` limit (100 KB). */
+const MAX_SIZE_MB = 0.095;
 
-/** Resize + compress a picked image to a tiny WebP avatar blob. */
+/** Cover-crop to 128×128 then compress to a tiny WebP avatar blob. */
 export async function compressAvatar(file: File): Promise<Blob> {
   if (!file.type.startsWith("image/")) {
     throw new Error("กรุณาเลือกรูปภาพ");
@@ -19,11 +23,20 @@ export async function compressAvatar(file: File): Promise<Blob> {
     const h = bitmap.height * scale;
     ctx.drawImage(bitmap, (AVATAR_SIZE - w) / 2, (AVATAR_SIZE - h) / 2, w, h);
 
-    const blob = await new Promise<Blob | null>((resolve) =>
+    const cropped = await new Promise<Blob | null>((resolve) =>
       canvas.toBlob(resolve, "image/webp", WEBP_QUALITY),
     );
-    if (!blob) throw new Error("บีบอัดรูปไม่สำเร็จ");
-    return blob;
+    if (!cropped) throw new Error("บีบอัดรูปไม่สำเร็จ");
+
+    if (cropped.size <= MAX_SIZE_MB * 1024 * 1024) return cropped;
+
+    return imageCompression(new File([cropped], "profile.webp", { type: "image/webp" }), {
+      maxSizeMB: MAX_SIZE_MB,
+      maxWidthOrHeight: AVATAR_SIZE,
+      fileType: "image/webp",
+      initialQuality: WEBP_QUALITY,
+      useWebWorker: true,
+    });
   } finally {
     bitmap.close();
   }
