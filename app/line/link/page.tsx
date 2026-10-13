@@ -7,13 +7,13 @@ import { Suspense, useEffect, useState } from "react";
 import { Phone } from "lucide-react";
 import { apiMessage, formatTelInput, linkLineAccount } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { clearLineIdToken, peekLineIdToken } from "@/lib/liff";
+import { clearLineIdToken, getLiffIdToken, peekLineIdToken } from "@/lib/liff";
 
 function LineLinkForm() {
   const { ready, session, setSession } = useAuth();
   const router = useRouter();
   const search = useSearchParams();
-  const next = search.get("next") || "/loans";
+  const next = search.get("next") || "/home";
   const [tel, setTel] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -25,7 +25,7 @@ function LineLinkForm() {
       router.replace(next);
       return;
     }
-    const token = peekLineIdToken();
+    const token = peekLineIdToken() || getLiffIdToken();
     if (!token) {
       router.replace(`/line?next=${encodeURIComponent(next)}`);
       return;
@@ -45,9 +45,9 @@ function LineLinkForm() {
             className="h-14 w-auto object-contain"
             priority
           />
-          <h1 className="mt-6 text-center text-[26px] font-bold text-brand-dark">ผูกบัญชี LINE</h1>
+          <h1 className="mt-6 text-center text-[26px] font-bold text-brand-dark">ผูกบัญชีเดิม</h1>
           <p className="mt-2 text-center text-[15px] text-brand-dark/70">
-            กรอกเบอร์ครั้งเดียวเพื่อเชื่อมกับบัญชีเกษตรกร
+            กรอกเบอร์ที่โรงสีหรือเว็บเคยลงทะเบียนไว้ — ครั้งเดียว จากนั้นเข้าด้วย LINE ได้เลย
           </p>
         </div>
 
@@ -95,14 +95,17 @@ function LineLinkForm() {
             disabled={busy || !idToken || tel.replace(/\D/g, "").length < 10}
             className="mt-6 flex h-14 w-full items-center justify-center rounded-2xl bg-brand text-[16px] font-bold text-white shadow disabled:bg-brand/35"
           >
-            {busy ? "กำลังผูกบัญชี…" : "ผูกบัญชีแล้วขอสินเชื่อ"}
+            {busy ? "กำลังผูกบัญชี…" : "ผูกบัญชีแล้วเข้าใช้งาน"}
           </button>
         </form>
 
         <p className="mt-8 text-center text-[14px] text-brand-dark/60">
           ยังไม่มีบัญชี?{" "}
-          <Link href="/register" className="font-bold text-brand underline-offset-2 hover:underline">
-            ลงทะเบียน
+          <Link
+            href={`/line?next=${encodeURIComponent(next)}`}
+            className="font-bold text-brand underline-offset-2 hover:underline"
+          >
+            เริ่มใช้งานด้วย LINE
           </Link>
         </p>
       </div>

@@ -1,22 +1,10 @@
-# LINE LIFF — ขอสินเชื่อบนเว็บ
+# LINE-first auth (farmer app)
 
-อัปโหลดเอกสารทำบนเว็บใน LINE (LIFF) เท่านั้น
+เปิดจาก LINE → ล็อกอินอัตโนมัติ ไม่ถามเบอร์ทุกครั้ง
 
-## Flow
+- คนใหม่: กด「เริ่มใช้งานด้วย LINE」→ สร้างบัญชีจากโปรไฟล์ LINE
+- คนที่โรงสีลงทะเบียนไว้แล้ว: กด「ผูกเบอร์เดิม」ครั้งเดียว
+- นอก LINE: ยังใช้ `/login` ด้วยเบอร์ได้
 
-1. Rich menu ชี้ไป `https://liff.line.me/<LIFF_ID>`  
-   (Endpoint URL ของ LIFF = `https://<farmer-host>/line`)
-2. ครั้งแรก: ผูกเบอร์ที่ `/line/link`
-3. เข้า `/loans` → ขอสินเชื่อ → แนบเอกสารบนหน้าเว็บ
-4. โรงสีตรวจที่ mill `/loans/pending`
-
-## Env
-
-```bash
-NEXT_PUBLIC_LIFF_ID=<LIFF ID>
-SUPABASE_URL=...
-SUPABASE_ANON_KEY=...
-# bucket: loan-documents
-```
-
-API ต้องมี `LINE_LOGIN_CHANNEL_ID` และ migration `000008_farmer_line_user_id`
+Env: `NEXT_PUBLIC_LIFF_ID`  
+รายละเอียด API: `refactor-dona-api/docs/LINE_LIFF_LOAN.md`

@@ -2,7 +2,7 @@ export type Farmer = {
   id: string;
   firstName: string;
   lastName: string;
-  tel: string;
+  tel: string; // may be "" for LINE-first accounts
   address: string;
   provinceId: number;
   districtId: number;

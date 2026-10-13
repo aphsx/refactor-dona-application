@@ -4,7 +4,7 @@ import type { FarmerRegisterInput, FarmerSession } from "@/lib/domain";
 function toSession(data: FarmerSession): FarmerSession {
   const session: FarmerSession = {
     token: data.token,
-    tel: data.tel,
+    tel: data.tel ?? "",
     displayName: data.displayName,
     role: data.role,
     farmerId: data.farmerId,
@@ -26,17 +26,21 @@ export async function loginByPhone(tel: string) {
   return toSession(data);
 }
 
-/** LIFF id_token login. Returns session when linked, or needs_link. */
-export async function loginByLine(idToken: string) {
-  const data = await apiRequest<FarmerSession | { status: "needs_link" }>("/auth/line", {
+export type LineLoginResult =
+  | { status: "ok"; session: FarmerSession }
+  | { status: "not_found" };
+
+/** LIFF id_token login. createIfMissing=true auto-registers from LINE profile. */
+export async function loginByLine(idToken: string, createIfMissing = true): Promise<LineLoginResult> {
+  const data = await apiRequest<FarmerSession | { status: string }>("/auth/line", {
     method: "POST",
-    body: JSON.stringify({ idToken }),
+    body: JSON.stringify({ idToken, createIfMissing }),
   });
-  if (isFarmerSession(data)) return { status: "linked" as const, session: toSession(data) };
-  return { status: "needs_link" as const };
+  if (isFarmerSession(data)) return { status: "ok", session: toSession(data) };
+  return { status: "not_found" };
 }
 
-/** Bind LINE user (from id_token) to farmer matched by tel. */
+/** Bind LINE user (from id_token) to an existing farmer matched by tel. */
 export async function linkLineAccount(idToken: string, tel: string) {
   const data = await apiRequest<FarmerSession>("/auth/line/link", {
     method: "POST",
