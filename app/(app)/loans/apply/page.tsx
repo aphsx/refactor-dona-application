@@ -35,8 +35,10 @@ export default function LoanApplyPage() {
         กลับ
       </Link>
 
-      <h1 className="mt-4 text-[26px] font-bold text-brand-dark">ขอสินเชื่อ</h1>
-      <p className="mt-1 text-[14px] text-brand-dark/55">กรอกข้อมูลคำขอ แล้วอัปโหลดเอกสารในขั้นถัดไป</p>
+      <h1 className="mt-5 text-[26px] font-bold text-brand-dark">ขอสินเชื่อ</h1>
+      <p className="mt-1 text-[14px] text-brand-dark/55">
+        กรอกข้อมูลคำขอ แล้วอัปโหลดเอกสารในหน้าถัดไป
+      </p>
 
       <form
         className="mt-8 space-y-4"
@@ -105,7 +107,7 @@ export default function LoanApplyPage() {
           disabled={busy || nationalId.replace(/\D/g, "").length !== 13 || !amount}
           className="flex h-14 w-full items-center justify-center rounded-2xl bg-brand text-[16px] font-bold text-white disabled:bg-brand/35"
         >
-          {busy ? "กำลังส่งคำขอ…" : "ส่งคำขอ แล้วแนบเอกสาร"}
+          {busy ? "กำลังส่งคำขอ…" : "ถัดไป — แนบเอกสาร"}
         </button>
       </form>
     </div>

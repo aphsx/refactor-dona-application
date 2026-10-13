@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight, FilePlus2, Wallet } from "lucide-react";
+import { ChevronRight, FilePlus2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   apiMessage,
@@ -36,32 +36,36 @@ export default function LoansPage() {
   }, [session]);
 
   return (
-    <div className="min-h-full px-5 pb-10 pt-8">
-      <header className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[12px] font-semibold tracking-[0.16em] text-brand/70 uppercase">dona</p>
-          <h1 className="mt-1 text-[26px] font-bold text-brand-dark">สินเชื่อ</h1>
-          <p className="mt-1 text-[14px] text-brand-dark/55">ยื่นคำขอและอัปโหลดเอกสารประกอบ</p>
-        </div>
-        <div className="grid h-11 w-11 place-items-center rounded-2xl bg-brand/10 text-brand">
-          <Wallet size={22} />
-        </div>
+    <div className="relative min-h-full pb-10">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-[280px] bg-[radial-gradient(120%_80%_at_10%_-10%,#1d8a6a_0%,#0f493b_50%,transparent_72%)]"
+      />
+
+      <header className="relative px-5 pt-8">
+        <p className="text-[12px] font-semibold tracking-[0.18em] text-white/70 uppercase">dona</p>
+        <h1 className="mt-1 text-[28px] font-bold leading-tight text-white">สินเชื่อ</h1>
+        <p className="mt-2 max-w-sm text-[14px] text-white/75">
+          ยื่นคำขอและอัปโหลดเอกสารบนหน้านี้ — ไม่ต้องส่งในแชท
+        </p>
       </header>
 
-      <Link
-        href="/loans/apply"
-        className="mt-6 flex h-14 items-center justify-center gap-2 rounded-2xl bg-brand text-[16px] font-bold text-white shadow"
-      >
-        <FilePlus2 size={20} />
-        ขอสินเชื่อใหม่
-      </Link>
+      <section className="relative mt-6 px-5">
+        <Link
+          href="/loans/apply"
+          className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-accent text-[16px] font-bold text-brand-dark shadow-[0_12px_28px_rgba(15,73,59,0.25)]"
+        >
+          <FilePlus2 size={20} />
+          ขอสินเชื่อใหม่
+        </Link>
+      </section>
 
-      <section className="mt-8">
+      <section className="relative mt-8 px-5">
         <h2 className="text-[16px] font-bold text-brand-dark">คำขอของฉัน</h2>
         {loading && <p className="mt-4 text-[14px] text-brand-dark/50">กำลังโหลด…</p>}
         {!loading && error && <p className="mt-4 text-[14px] font-semibold text-danger">{error}</p>}
         {!loading && !error && items.length === 0 && (
-          <p className="mt-4 text-[14px] text-brand-dark/50">ยังไม่มีคำขอสินเชื่อ</p>
+          <p className="mt-4 text-[14px] text-brand-dark/50">ยังไม่มีคำขอ — กดปุ่มด้านบนเพื่อเริ่ม</p>
         )}
         <ul className="mt-3 space-y-3">
           {items.map((row) => {
@@ -73,7 +77,7 @@ export default function LoansPage() {
                   className="flex items-center gap-3 rounded-2xl bg-white px-4 py-4 shadow-sm ring-1 ring-brand/10"
                 >
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <p className="truncate text-[16px] font-bold text-brand-dark">
                         {formatBaht(row.requestedAmount)} บาท
                       </p>

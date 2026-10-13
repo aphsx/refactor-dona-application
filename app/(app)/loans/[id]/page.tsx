@@ -59,7 +59,7 @@ export default function LoanDetailPage() {
 
       {!loading && item && (
         <>
-          <header className="mt-4">
+          <header className="mt-5">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-[26px] font-bold text-brand-dark">
                 {formatBaht(item.requestedAmount)} บาท
@@ -77,14 +77,10 @@ export default function LoanDetailPage() {
           </header>
 
           <section className="mt-8">
-            <div className="flex items-end justify-between gap-3">
-              <div>
-                <h2 className="text-[16px] font-bold text-brand-dark">เอกสารประกอบ</h2>
-                <p className="mt-0.5 text-[13px] text-brand-dark/50">
-                  แนบ PDF หรือรูปภาพ · จำเป็น {progress.attached}/{progress.total}
-                </p>
-              </div>
-            </div>
+            <h2 className="text-[16px] font-bold text-brand-dark">เอกสารประกอบ</h2>
+            <p className="mt-0.5 text-[13px] text-brand-dark/50">
+              แนบ PDF หรือรูป · จำเป็น {progress.attached}/{progress.total}
+            </p>
 
             {uploadError && (
               <p className="mt-3 text-[14px] font-semibold text-danger">{uploadError}</p>
