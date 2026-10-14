@@ -1,5 +1,10 @@
 import { apiRequest, setSession } from "@/lib/api/client";
-import { nationalIdDigits, type FarmerRegisterInput, type FarmerSession } from "@/lib/domain";
+import {
+  nationalIdDigits,
+  phoneDigits,
+  type FarmerRegisterInput,
+  type FarmerSession,
+} from "@/lib/domain";
 
 function toSession(data: FarmerSession): FarmerSession {
   const session: FarmerSession = {
@@ -40,13 +45,14 @@ export async function loginByLine(idToken: string, createIfMissing = false): Pro
   return { status: "not_found" };
 }
 
-/** Bind LINE user (from id_token) to an existing farmer matched by national ID. */
-export async function linkLineAccount(idToken: string, nationalId: string) {
+/** Bind LINE user (from id_token) to an existing farmer matched by national ID + tel. */
+export async function linkLineAccount(idToken: string, nationalId: string, tel: string) {
   const data = await apiRequest<FarmerSession>("/auth/line/link", {
     method: "POST",
     body: JSON.stringify({
       idToken,
       nationalId: nationalIdDigits(nationalId),
+      tel: phoneDigits(tel),
     }),
   });
   return toSession(data);

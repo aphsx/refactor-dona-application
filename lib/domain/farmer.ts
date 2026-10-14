@@ -100,3 +100,16 @@ export function formatNationalId(value: string) {
   }
   return `${digits.slice(0, 1)}-${digits.slice(1, 5)}-${digits.slice(5, 10)}-${digits.slice(10, 12)}-${digits.slice(12)}`;
 }
+
+/** Digits only for Thai mobile (max 10). */
+export function phoneDigits(value: string) {
+  return value.replace(/\D/g, "").slice(0, 10);
+}
+
+/** Format Thai mobile for display/input: 0XX-XXX-XXXX. */
+export function formatPhone(value: string) {
+  const digits = phoneDigits(value);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
