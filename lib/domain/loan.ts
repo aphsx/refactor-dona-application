@@ -12,9 +12,16 @@ export type LoanApplicationDocument = {
 /** Same required set as mill app / API seed (ทะเบียนสมรส optional). */
 export const LOAN_REQUIRED_DOCUMENT_KIND_IDS = new Set([1101, 1102, 1104, 1105]);
 
-export const LOAN_APPLICATION_STATUS_PREPARING_ID = 901;
+/** Document kinds for apply wizard (before application id exists). */
+export const LOAN_DOCUMENT_KINDS = [
+  { kindId: 1101, code: "id_card", name: "บัตรประชาชน", required: true },
+  { kindId: 1102, code: "house_reg", name: "ทะเบียนบ้าน", required: true },
+  { kindId: 1103, code: "marriage", name: "ทะเบียนสมรส", required: false },
+  { kindId: 1104, code: "land_title", name: "โฉนดที่ดิน / นส. 3 / สปก", required: true },
+  { kindId: 1105, code: "guarantor", name: "บัตรประชาชนผู้ค้ำประกัน", required: true },
+] as const;
+
 export const LOAN_APPLICATION_STATUS_REVIEWING_ID = 902;
-export const LOAN_APPLICATION_STATUS_CANCELLED_ID = 905;
 
 export function isLoanDocumentRequired(doc: Pick<LoanApplicationDocument, "kindId" | "required">) {
   if (typeof doc.required === "boolean") return doc.required;

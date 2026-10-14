@@ -4,19 +4,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
-import { apiMessage, createLoanApplication, formatNationalId, nationalIdDigits } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
+import { formatNationalId, nationalIdDigits } from "@/lib/api";
+import { useLoanApply } from "@/lib/loan-apply-context";
 
 export default function LoanApplyPage() {
   const router = useRouter();
-  const { session } = useAuth();
-  const [nationalId, setNationalId] = useState(() =>
-    formatNationalId(session?.farmer?.nationalId || session?.nationalId || ""),
-  );
-  const [amount, setAmount] = useState("");
-  const [purpose, setPurpose] = useState("");
+  const { details, setDetails } = useLoanApply();
   const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
 
   return (
     <div className="min-h-full px-5 pb-10 pt-6">
@@ -30,33 +24,30 @@ export default function LoanApplyPage() {
 
       <h1 className="mt-5 text-[26px] font-bold text-brand-dark">ขอสินเชื่อ</h1>
       <p className="mt-1 text-[14px] text-brand-dark/55">
-        กรอกข้อมูลคำขอ แล้วอัปโหลดเอกสารในหน้าถัดไป
+        กรอกรายละเอียด แล้วแนบเอกสารให้ครบก่อนกดส่งครั้งเดียว
       </p>
+
+      <div className="mt-5 flex gap-2 text-[13px] font-semibold">
+        <span className="text-brand">1. รายละเอียด</span>
+        <span className="text-brand-dark/30">→</span>
+        <span className="text-brand-dark/40">2. เอกสาร + ส่ง</span>
+      </div>
 
       <form
         className="mt-8 space-y-4"
         onSubmit={(event) => {
           event.preventDefault();
-          void (async () => {
-            setBusy(true);
-            setError("");
-            try {
-              const requestedAmount = Number(amount.replace(/,/g, ""));
-              if (!Number.isFinite(requestedAmount) || requestedAmount <= 0) {
-                throw new Error("กรุณาระบุจำนวนเงิน");
-              }
-              const created = await createLoanApplication({
-                nationalId: nationalIdDigits(nationalId),
-                requestedAmount,
-                purpose: purpose.trim(),
-              });
-              router.replace(`/loans/${created.id}`);
-            } catch (err) {
-              setError(apiMessage(err));
-            } finally {
-              setBusy(false);
-            }
-          })();
+          setError("");
+          const requestedAmount = Number(details.amount.replace(/,/g, ""));
+          if (!Number.isFinite(requestedAmount) || requestedAmount <= 0) {
+            setError("กรุณาระบุจำนวนเงิน");
+            return;
+          }
+          if (nationalIdDigits(details.nationalId).length !== 13) {
+            setError("เลขบัตรประชาชนต้องมี 13 หลัก");
+            return;
+          }
+          router.push("/loans/apply/documents");
         }}
       >
         <label className="block">
@@ -65,8 +56,10 @@ export default function LoanApplyPage() {
             inputMode="numeric"
             autoComplete="off"
             placeholder="X-XXXX-XXXXX-XX-X"
-            value={nationalId}
-            onChange={(event) => setNationalId(formatNationalId(event.target.value))}
+            value={details.nationalId}
+            onChange={(event) =>
+              setDetails({ ...details, nationalId: formatNationalId(event.target.value) })
+            }
             className="mt-1 h-12 w-full rounded-xl border border-brand/15 bg-white px-3 text-[15px] outline-none focus:border-brand/35"
           />
         </label>
@@ -76,8 +69,10 @@ export default function LoanApplyPage() {
           <input
             inputMode="decimal"
             placeholder="เช่น 50000"
-            value={amount}
-            onChange={(event) => setAmount(event.target.value.replace(/[^\d.]/g, ""))}
+            value={details.amount}
+            onChange={(event) =>
+              setDetails({ ...details, amount: event.target.value.replace(/[^\d.]/g, "") })
+            }
             className="mt-1 h-12 w-full rounded-xl border border-brand/15 bg-white px-3 text-[15px] outline-none focus:border-brand/35"
           />
         </label>
@@ -87,8 +82,8 @@ export default function LoanApplyPage() {
           <textarea
             rows={3}
             placeholder="เช่น ซื้อปุ๋ย / เครื่องจักร"
-            value={purpose}
-            onChange={(event) => setPurpose(event.target.value)}
+            value={details.purpose}
+            onChange={(event) => setDetails({ ...details, purpose: event.target.value })}
             className="mt-1 w-full rounded-xl border border-brand/15 bg-white px-3 py-3 text-[15px] outline-none focus:border-brand/35"
           />
         </label>
@@ -97,10 +92,10 @@ export default function LoanApplyPage() {
 
         <button
           type="submit"
-          disabled={busy || nationalIdDigits(nationalId).length !== 13 || !amount}
+          disabled={nationalIdDigits(details.nationalId).length !== 13 || !details.amount}
           className="flex h-14 w-full items-center justify-center rounded-2xl bg-brand text-[16px] font-bold text-white disabled:bg-brand/35"
         >
-          {busy ? "กำลังส่งคำขอ…" : "ถัดไป — แนบเอกสาร"}
+          ถัดไป — แนบเอกสาร
         </button>
       </form>
     </div>

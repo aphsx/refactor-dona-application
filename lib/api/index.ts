@@ -25,7 +25,6 @@ export {
   getLoanApplication,
   listMyLoanApplications,
   setLoanApplicationDocumentStorage,
-  submitLoanApplication,
   uploadLoanDocument,
 } from "@/lib/api/loans";
 
@@ -67,8 +66,8 @@ export type {
 } from "@/lib/domain";
 
 export {
-  LOAN_APPLICATION_STATUS_PREPARING_ID,
   LOAN_APPLICATION_STATUS_REVIEWING_ID,
+  LOAN_DOCUMENT_KINDS,
   LOAN_REQUIRED_DOCUMENT_KIND_IDS,
   PLANTING_PLAN_STATUS_DONE_ID,
   PLANTING_PLAN_STATUS_PENDING_ID,

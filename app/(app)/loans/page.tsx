@@ -46,7 +46,7 @@ export default function LoansPage() {
         <p className="text-[12px] font-semibold tracking-[0.18em] text-white/70 uppercase">dona</p>
         <h1 className="mt-1 text-[28px] font-bold leading-tight text-white">สินเชื่อ</h1>
         <p className="mt-2 max-w-sm text-[14px] text-white/75">
-          ยื่นคำขอและอัปโหลดเอกสารบนหน้านี้ — ไม่ต้องส่งในแชท
+          กรอกรายละเอียดและแนบเอกสารให้ครบ แล้วส่งครั้งเดียวเข้าสู่รอการตรวจสอบ
         </p>
       </header>
 
