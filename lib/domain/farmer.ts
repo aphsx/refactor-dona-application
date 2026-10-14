@@ -75,9 +75,21 @@ export function farmerDisplayName(
   return prefix ? `${prefix}${base}` : base;
 }
 
-/** Format Thai national ID for display: X-XXXX-XXXXX-XX-X (max 13 digits). */
+/** Digits only (max 13). Use when saving / calling API. */
+export function nationalIdDigits(value: string) {
+  return value.replace(/\D/g, "").slice(0, 13);
+}
+
+/** Normalize to 13 digits, or null if invalid. */
+export function canonicalNationalId(value: string) {
+  const digits = nationalIdDigits(value);
+  if (!/^\d{13}$/.test(digits)) return null;
+  return digits;
+}
+
+/** Format Thai national ID for display/input: X-XXXX-XXXXX-XX-X (max 13 digits). */
 export function formatNationalId(value: string) {
-  const digits = value.replace(/\D/g, "").slice(0, 13);
+  const digits = nationalIdDigits(value);
   if (digits.length <= 1) return digits;
   if (digits.length <= 5) return `${digits.slice(0, 1)}-${digits.slice(1)}`;
   if (digits.length <= 10) {

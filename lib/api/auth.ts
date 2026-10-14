@@ -1,5 +1,5 @@
 import { apiRequest, setSession } from "@/lib/api/client";
-import type { FarmerRegisterInput, FarmerSession } from "@/lib/domain";
+import { nationalIdDigits, type FarmerRegisterInput, type FarmerSession } from "@/lib/domain";
 
 function toSession(data: FarmerSession): FarmerSession {
   const session: FarmerSession = {
@@ -21,7 +21,7 @@ function isFarmerSession(data: unknown): data is FarmerSession {
 export async function loginByNationalId(nationalId: string) {
   const data = await apiRequest<FarmerSession>("/auth/login/national-id", {
     method: "POST",
-    body: JSON.stringify({ nationalId: nationalId.replace(/\D/g, "") }),
+    body: JSON.stringify({ nationalId: nationalIdDigits(nationalId) }),
   });
   return toSession(data);
 }
@@ -46,7 +46,7 @@ export async function linkLineAccount(idToken: string, nationalId: string) {
     method: "POST",
     body: JSON.stringify({
       idToken,
-      nationalId: nationalId.replace(/\D/g, ""),
+      nationalId: nationalIdDigits(nationalId),
     }),
   });
   return toSession(data);
@@ -58,7 +58,7 @@ export async function registerFarmer(input: FarmerRegisterInput) {
     method: "POST",
     body: JSON.stringify({
       ...input,
-      nationalId: input.nationalId.replace(/\D/g, ""),
+      nationalId: nationalIdDigits(input.nationalId),
     }),
   });
   return toSession(data);
@@ -71,7 +71,7 @@ export async function registerFarmerWithLine(idToken: string, input: FarmerRegis
     body: JSON.stringify({
       idToken,
       ...input,
-      nationalId: input.nationalId.replace(/\D/g, ""),
+      nationalId: nationalIdDigits(input.nationalId),
     }),
   });
   return toSession(data);

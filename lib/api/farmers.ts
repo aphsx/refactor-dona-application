@@ -1,5 +1,5 @@
 import { apiRequest, getAccessToken, ApiError } from "@/lib/api/client";
-import type { Farmer, FarmerUpdateInput } from "@/lib/domain";
+import { nationalIdDigits, type Farmer, type FarmerUpdateInput } from "@/lib/domain";
 
 export async function listGroupFarmers(groupId: string) {
   const data = await apiRequest<{ items: Farmer[] }>(
@@ -17,7 +17,7 @@ export async function updateFarmer(id: string, input: FarmerUpdateInput) {
     method: "PUT",
     body: JSON.stringify({
       ...input,
-      nationalId: input.nationalId.replace(/\D/g, ""),
+      nationalId: nationalIdDigits(input.nationalId),
     }),
   });
 }

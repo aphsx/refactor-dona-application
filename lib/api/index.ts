@@ -71,6 +71,8 @@ export {
   farmerDisplayName,
   formatAreaRai,
   formatNationalId,
+  nationalIdDigits,
+  canonicalNationalId,
   formatThaiDate,
   isLoanDocumentRequired,
   loanRequiredDocumentProgress,

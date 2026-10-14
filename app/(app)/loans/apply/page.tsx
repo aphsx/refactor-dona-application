@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
-import { apiMessage, createLoanApplication, formatNationalId } from "@/lib/api";
+import { apiMessage, createLoanApplication, formatNationalId, nationalIdDigits } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
 export default function LoanApplyPage() {
@@ -46,7 +46,7 @@ export default function LoanApplyPage() {
                 throw new Error("กรุณาระบุจำนวนเงิน");
               }
               const created = await createLoanApplication({
-                nationalId: nationalId.replace(/\D/g, ""),
+                nationalId: nationalIdDigits(nationalId),
                 requestedAmount,
                 purpose: purpose.trim(),
               });
@@ -97,7 +97,7 @@ export default function LoanApplyPage() {
 
         <button
           type="submit"
-          disabled={busy || nationalId.replace(/\D/g, "").length !== 13 || !amount}
+          disabled={busy || nationalIdDigits(nationalId).length !== 13 || !amount}
           className="flex h-14 w-full items-center justify-center rounded-2xl bg-brand text-[16px] font-bold text-white disabled:bg-brand/35"
         >
           {busy ? "กำลังส่งคำขอ…" : "ถัดไป — แนบเอกสาร"}
