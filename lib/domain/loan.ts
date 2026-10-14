@@ -47,6 +47,9 @@ export type LoanApplication = {
   submittedOn: string;
   statusId: number;
   status: LoanLookup;
+  /** Mill username (approve/reject) or farmer label (cancel). */
+  actedBy?: string;
+  actedAt?: string | null;
   documents: LoanApplicationDocument[];
 };
 

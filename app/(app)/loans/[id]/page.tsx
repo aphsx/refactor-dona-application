@@ -16,6 +16,7 @@ import {
   apiMessage,
   cancelLoanApplication,
   formatThaiDate,
+  formatThaiDateTime,
   getLoanApplication,
   isLoanDocumentRequired,
   LOAN_APPLICATION_STATUS_REVIEWING_ID,
@@ -102,6 +103,19 @@ export default function LoanDetailPage() {
           </p>
           {item.purpose?.trim() && (
             <p className="mt-2 text-[15px] text-brand-dark/80">{item.purpose}</p>
+          )}
+          {item.actedBy?.trim() && (
+            <div className="mt-4 rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-brand/10">
+              <p className="text-[13px] font-bold text-brand-dark/55">ผลการดำเนินการ</p>
+              <p className="mt-1 text-[15px] font-bold text-brand-dark">
+                {item.status?.name || "ดำเนินการ"}โดย {item.actedBy.trim()}
+              </p>
+              {item.actedAt && (
+                <p className="mt-0.5 text-[13px] text-brand-dark/55">
+                  {formatThaiDateTime(item.actedAt)}
+                </p>
+              )}
+            </div>
           )}
 
           <div className="mt-6 space-y-4">

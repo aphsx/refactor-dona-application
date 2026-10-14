@@ -79,6 +79,7 @@ export {
   phoneDigits,
   canonicalNationalId,
   formatThaiDate,
+  formatThaiDateTime,
   isLoanDocumentRequired,
   loanRequiredDocumentProgress,
 } from "@/lib/domain";
