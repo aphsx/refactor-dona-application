@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import {
+  ApiError,
   apiMessage,
   formatNationalId,
   listNamePrefixes,
@@ -56,6 +57,7 @@ function RegisterForm() {
   const [lineDisplayName, setLineDisplayName] = useState("");
   const [lineReady, setLineReady] = useState(!viaLine);
   const [error, setError] = useState("");
+  const [identityConflict, setIdentityConflict] = useState(false);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -200,6 +202,7 @@ function RegisterForm() {
                 districtId,
                 subdistrictId,
               };
+              setIdentityConflict(false);
               const sessionNext = viaLine
                 ? await registerFarmerWithLine(getLiffIdToken() || peekLineIdToken() || "", body)
                 : await registerFarmer(body);
@@ -208,6 +211,11 @@ function RegisterForm() {
               router.replace(next);
             } catch (err) {
               setError(apiMessage(err));
+              const conflict =
+                viaLine &&
+                err instanceof ApiError &&
+                err.status === 409;
+              setIdentityConflict(conflict);
             } finally {
               setBusy(false);
             }
@@ -284,6 +292,15 @@ function RegisterForm() {
         </p>
 
         {error && <p className="text-center text-[14px] font-semibold text-danger">{error}</p>}
+
+        {identityConflict && (
+          <Link
+            href={`/line/link?next=${encodeURIComponent(next)}&nationalId=${encodeURIComponent(nationalId.replace(/\D/g, ""))}`}
+            className="flex h-14 w-full items-center justify-center rounded-2xl border border-brand/20 bg-white text-[15px] font-bold text-brand"
+          >
+            ไปผูกบัญชีกับ LINE
+          </Link>
+        )}
 
         <button
           type="submit"

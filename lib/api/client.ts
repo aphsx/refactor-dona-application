@@ -68,6 +68,7 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
       response.status === 401 &&
       path !== "/auth/login/national-id" &&
       path !== "/auth/register" &&
+      path !== "/auth/register/line" &&
       path !== "/auth/line" &&
       path !== "/auth/line/link"
     ) {

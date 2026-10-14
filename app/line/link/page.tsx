@@ -14,10 +14,17 @@ function LineLinkForm() {
   const router = useRouter();
   const search = useSearchParams();
   const next = search.get("next") || "/home";
-  const [nationalId, setNationalId] = useState("");
+  const prefillId = search.get("nationalId") || "";
+  const [nationalId, setNationalId] = useState(() =>
+    prefillId ? formatNationalId(prefillId) : "",
+  );
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [idToken, setIdToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (prefillId) setNationalId(formatNationalId(prefillId));
+  }, [prefillId]);
 
   useEffect(() => {
     if (!ready) return;
