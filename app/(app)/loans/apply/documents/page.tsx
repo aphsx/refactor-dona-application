@@ -25,6 +25,7 @@ export default function LoanApplyDocumentsPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [confirmSend, setConfirmSend] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const requiredAttached = useMemo(
     () => [...LOAN_REQUIRED_DOCUMENT_KIND_IDS].filter((id) => Boolean(files[id])).length,
@@ -35,9 +36,11 @@ export default function LoanApplyDocumentsPage() {
   const detailsReady =
     nationalIdDigits(details.nationalId).length === 13 && Number.isFinite(amount) && amount > 0;
 
+  // Guard only when user lands here without step-1 data — not after a successful submit
+  // (clear() empties details and would otherwise bounce back to /loans/apply).
   useEffect(() => {
-    if (!detailsReady) router.replace("/loans/apply");
-  }, [detailsReady, router]);
+    if (!detailsReady && !submitted && !busy) router.replace("/loans/apply");
+  }, [detailsReady, submitted, busy, router]);
 
   async function submitAll() {
     setBusy(true);
@@ -58,15 +61,24 @@ export default function LoanApplyDocumentsPage() {
         await uploadLoanDocument(created.id, kind.kindId, file);
       }
 
-      clear();
+      setSubmitted(true);
       setConfirmSend(false);
       router.replace(`/loans/${created.id}`);
+      clear();
     } catch (err) {
       setError(apiMessage(err));
       setConfirmSend(false);
     } finally {
       setBusy(false);
     }
+  }
+
+  if (submitted) {
+    return (
+      <div className="flex min-h-full items-center justify-center px-5 text-[14px] text-brand-dark/50">
+        กำลังเปิดคำขอ…
+      </div>
+    );
   }
 
   if (!detailsReady) {
