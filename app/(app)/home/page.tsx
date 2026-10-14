@@ -212,7 +212,7 @@ export default function HomePage() {
       <section className="home-rise relative mt-8 px-5" style={{ animationDelay: "80ms" }}>
         <div className="mb-3 flex items-end justify-between gap-3">
           <div>
-            <h2 className="text-[18px] font-bold text-brand-dark">โซลูชันโดน่า</h2>
+            <h2 className="text-[18px] font-bold text-brand-dark">โซลูชันดูนา</h2>
             <p className="mt-0.5 text-[13px] text-brand-dark/50">เครื่องมือหลักสำหรับงานในนา</p>
           </div>
           <span className="cursor-default text-[13px] font-semibold text-brand">
