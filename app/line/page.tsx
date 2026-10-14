@@ -102,9 +102,6 @@ function LineEntry() {
       {phase === "choose" && (
         <div className="mt-8 w-full">
           <h1 className="text-center text-[24px] font-bold text-brand-dark">ยินดีต้อนรับ</h1>
-          <p className="mt-2 text-center text-[14px] text-brand-dark/65">
-            ยังไม่มีบัญชี — ลงทะเบียนด้วย LINE แล้วกรอกข้อมูลเกษตรกร หรือกรอกเองทั้งหมด
-          </p>
           <Link
             href={`/register?via=line&next=${encodeURIComponent(next)}`}
             className="mt-8 flex h-14 w-full items-center justify-center rounded-2xl bg-brand text-[16px] font-bold text-white shadow"
