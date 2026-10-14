@@ -11,7 +11,7 @@ export function formatBaht(value: number) {
 export function loanStatusTone(name: string) {
   if (name === "อนุมัติ") return "bg-[#e8f8f0] text-[#0f8a5f]";
   if (name === "ปฏิเสธ" || name === "ยกเลิก") return "bg-red-50 text-danger";
-  if (name === "รอการตรวจสอบ" || name === "กำลังตรวจสอบ") {
+  if (name === "รอการตรวจสอบ" || name === "กำลังตรวจสอบ" || name === "ตีกลับเอกสาร") {
     return "bg-amber-50 text-amber-800";
   }
   return "bg-brand-light text-brand";

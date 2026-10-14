@@ -22,6 +22,7 @@ export const LOAN_DOCUMENT_KINDS = [
 ] as const;
 
 export const LOAN_APPLICATION_STATUS_REVIEWING_ID = 902;
+export const LOAN_APPLICATION_STATUS_RETURNED_DOCS_ID = 906;
 
 export function isLoanDocumentRequired(doc: Pick<LoanApplicationDocument, "kindId" | "required">) {
   if (typeof doc.required === "boolean") return doc.required;
@@ -47,7 +48,9 @@ export type LoanApplication = {
   submittedOn: string;
   statusId: number;
   status: LoanLookup;
-  /** Mill username (approve/reject) or farmer label (cancel). */
+  /** Reason from mill when status is returned_docs (906). */
+  reviewNote?: string;
+  /** Mill username (approve/reject/return) or farmer label (cancel). */
   actedBy?: string;
   actedAt?: string | null;
   documents: LoanApplicationDocument[];

@@ -8,12 +8,12 @@ import {
   apiMessage,
   formatThaiDate,
   listMyLoanApplications,
+  LOAN_APPLICATION_STATUS_RETURNED_DOCS_ID,
+  LOAN_APPLICATION_STATUS_REVIEWING_ID,
   loanRequiredDocumentProgress,
   type LoanApplication,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-
-const LOAN_APPLICATION_STATUS_REVIEWING_ID = 902;
 
 export default function LoansPage() {
   const { session } = useAuth();
@@ -77,7 +77,13 @@ export default function LoansPage() {
         <ul className="space-y-3">
           {items.map((row) => {
             const docs = loanRequiredDocumentProgress(row.documents ?? []);
-            const showDocs = row.statusId === LOAN_APPLICATION_STATUS_REVIEWING_ID;
+            const showDocs =
+              row.statusId === LOAN_APPLICATION_STATUS_REVIEWING_ID ||
+              row.statusId === LOAN_APPLICATION_STATUS_RETURNED_DOCS_ID;
+            const returnedNote =
+              row.statusId === LOAN_APPLICATION_STATUS_RETURNED_DOCS_ID
+                ? row.reviewNote?.trim()
+                : "";
             return (
               <li key={row.id}>
                 <Link
@@ -96,9 +102,9 @@ export default function LoansPage() {
                       </span>
                     </div>
                     <p className="mt-1 truncate text-[13px] text-brand-dark/55">
-                      {row.purpose?.trim() || "ไม่ระบุวัตถุประสงค์"} ·{" "}
-                      {formatThaiDate(row.submittedOn?.slice(0, 10) || "")}
-                      {showDocs ? ` · เอกสาร ${docs.attached}/${docs.total}` : ""}
+                      {returnedNote
+                        ? `โรงสีขอให้แก้: ${returnedNote}`
+                        : `${row.purpose?.trim() || "ไม่ระบุวัตถุประสงค์"} · ${formatThaiDate(row.submittedOn?.slice(0, 10) || "")}${showDocs ? ` · เอกสาร ${docs.attached}/${docs.total}` : ""}`}
                     </p>
                   </div>
                   <ChevronRight size={18} className="shrink-0 text-brand/40" />

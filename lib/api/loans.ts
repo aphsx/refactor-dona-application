@@ -40,6 +40,14 @@ export function cancelLoanApplication(id: string) {
   });
 }
 
+/** Farmer resubmits after fixing docs on a returned application. */
+export function resubmitLoanApplication(id: string) {
+  return apiRequest<LoanApplication>(`/loans/applications/${encodeURIComponent(id)}/resubmit`, {
+    method: "POST",
+    body: "{}",
+  });
+}
+
 export function setLoanApplicationDocumentStorage(
   applicationId: string,
   kindId: number,
