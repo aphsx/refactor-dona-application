@@ -14,10 +14,34 @@ export function isLiffConfigured() {
   return Boolean(getLiffId());
 }
 
-/** Where to send logged-out users: LINE/LIFF when configured, else phone login. */
+/**
+ * LIFF Endpoint in LINE Console is production (e.g. donathai.online).
+ * Opening localhost with that LIFF ID triggers a native "400 Bad Request" alert.
+ */
+export function isLiffEndpointCompatible() {
+  if (typeof window === "undefined") return true;
+  const host = window.location.hostname;
+  if (host === "localhost" || host === "127.0.0.1") return false;
+  const endpoint = process.env.NEXT_PUBLIC_LIFF_ENDPOINT_ORIGIN?.trim();
+  if (!endpoint) return true;
+  try {
+    return new URL(endpoint).origin === window.location.origin;
+  } catch {
+    return true;
+  }
+}
+
+/** Prefer LINE only when LIFF is configured and this origin matches the Endpoint URL. */
+export function shouldUseLiffAuth() {
+  return isLiffConfigured() && isLiffEndpointCompatible();
+}
+
+/** Where to send logged-out users: LINE/LIFF when safe, else national-id login. */
 export function authEntryPath(next?: string) {
   const q = next ? `?next=${encodeURIComponent(next)}` : "";
-  return isLiffConfigured() ? `/line${q}` : `/login${q}`;
+  if (shouldUseLiffAuth()) return `/line${q}`;
+  // direct=1 skips the /line redirect on the login page
+  return next ? `/login?direct=1&next=${encodeURIComponent(next)}` : "/login?direct=1";
 }
 
 /** Init LIFF once. Returns true when running inside a LIFF context. */

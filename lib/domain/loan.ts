@@ -12,6 +12,10 @@ export type LoanApplicationDocument = {
 /** Same required set as mill app / API seed (ทะเบียนสมรส optional). */
 export const LOAN_REQUIRED_DOCUMENT_KIND_IDS = new Set([1101, 1102, 1104, 1105]);
 
+export const LOAN_APPLICATION_STATUS_PREPARING_ID = 901;
+export const LOAN_APPLICATION_STATUS_REVIEWING_ID = 902;
+export const LOAN_APPLICATION_STATUS_CANCELLED_ID = 905;
+
 export function isLoanDocumentRequired(doc: Pick<LoanApplicationDocument, "kindId" | "required">) {
   if (typeof doc.required === "boolean") return doc.required;
   return LOAN_REQUIRED_DOCUMENT_KIND_IDS.has(doc.kindId);

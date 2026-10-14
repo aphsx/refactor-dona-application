@@ -33,6 +33,20 @@ export function createLoanApplication(input: LoanApplicationCreateInput) {
   });
 }
 
+export function submitLoanApplication(id: string) {
+  return apiRequest<LoanApplication>(`/loans/applications/${encodeURIComponent(id)}/submit`, {
+    method: "POST",
+    body: "{}",
+  });
+}
+
+export function cancelLoanApplication(id: string) {
+  return apiRequest<LoanApplication>(`/loans/applications/${encodeURIComponent(id)}/cancel`, {
+    method: "POST",
+    body: "{}",
+  });
+}
+
 export function setLoanApplicationDocumentStorage(
   applicationId: string,
   kindId: number,

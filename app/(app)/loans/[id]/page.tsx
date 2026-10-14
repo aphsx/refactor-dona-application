@@ -1,15 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ArrowLeft, CheckCircle2, Upload } from "lucide-react";
 import {
   apiMessage,
+  cancelLoanApplication,
   formatThaiDate,
   getLoanApplication,
   isLoanDocumentRequired,
+  LOAN_APPLICATION_STATUS_PREPARING_ID,
+  LOAN_APPLICATION_STATUS_REVIEWING_ID,
   loanRequiredDocumentProgress,
+  submitLoanApplication,
   uploadLoanDocument,
   type LoanApplication,
 } from "@/lib/api";
@@ -21,6 +25,7 @@ function formatBaht(value: number) {
 
 export default function LoanDetailPage() {
   const { session } = useAuth();
+  const router = useRouter();
   const params = useParams<{ id: string }>();
   const id = params.id;
   const [item, setItem] = useState<LoanApplication | null>(null);
@@ -28,6 +33,8 @@ export default function LoanDetailPage() {
   const [error, setError] = useState("");
   const [busyKind, setBusyKind] = useState<number | null>(null);
   const [uploadError, setUploadError] = useState("");
+  const [actionBusy, setActionBusy] = useState<"submit" | "cancel" | null>(null);
+  const [confirmCancel, setConfirmCancel] = useState(false);
 
   useEffect(() => {
     if (!session || !id) return;
@@ -43,9 +50,47 @@ export default function LoanDetailPage() {
   }, [session, id]);
 
   const progress = loanRequiredDocumentProgress(item?.documents ?? []);
+  const statusId = item?.statusId ?? 0;
+  const isPreparing = statusId === LOAN_APPLICATION_STATUS_PREPARING_ID;
+  const isReviewing = statusId === LOAN_APPLICATION_STATUS_REVIEWING_ID;
+  const canUpload = isPreparing;
+  const canSubmit = isPreparing && progress.attached >= progress.total && progress.total > 0;
+  const canCancel = isPreparing || isReviewing;
+  const anyBusy = busyKind != null || actionBusy != null;
+
+  async function onSubmit() {
+    if (!item) return;
+    setActionBusy("submit");
+    setUploadError("");
+    try {
+      const updated = await submitLoanApplication(item.id);
+      setItem(updated);
+    } catch (err) {
+      setUploadError(apiMessage(err));
+    } finally {
+      setActionBusy(null);
+    }
+  }
+
+  async function onCancel() {
+    if (!item) return;
+    setActionBusy("cancel");
+    setUploadError("");
+    try {
+      const updated = await cancelLoanApplication(item.id);
+      setConfirmCancel(false);
+      setItem(updated);
+      router.replace("/loans");
+    } catch (err) {
+      setUploadError(apiMessage(err));
+      setConfirmCancel(false);
+    } finally {
+      setActionBusy(null);
+    }
+  }
 
   return (
-    <div className="min-h-full px-5 pb-10 pt-6">
+    <div className={`min-h-full px-5 pt-6 ${canSubmit || canCancel ? "pb-32" : "pb-10"}`}>
       <Link
         href="/loans"
         className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-brand"
@@ -79,7 +124,9 @@ export default function LoanDetailPage() {
           <section className="mt-8">
             <h2 className="text-[16px] font-bold text-brand-dark">เอกสารประกอบ</h2>
             <p className="mt-0.5 text-[13px] text-brand-dark/50">
-              แนบ PDF หรือรูป (บีบอัตโนมัติ) · จำเป็น {progress.attached}/{progress.total}
+              {canUpload
+                ? `แนบ PDF หรือรูป (บีบอัตโนมัติ) · จำเป็น ${progress.attached}/${progress.total}`
+                : `แนบแล้ว ${progress.attached}/${progress.total} รายการที่จำเป็น`}
             </p>
 
             {uploadError && (
@@ -106,9 +153,7 @@ export default function LoanDetailPage() {
                         </p>
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-2">
-                        {doc.attached && (
-                          <CheckCircle2 className="text-brand" size={22} />
-                        )}
+                        {doc.attached && <CheckCircle2 className="text-brand" size={22} />}
                         {doc.attached && doc.storagePath?.startsWith("http") && (
                           <a
                             href={doc.storagePath}
@@ -119,15 +164,15 @@ export default function LoanDetailPage() {
                             ดูไฟล์
                           </a>
                         )}
-                        {!doc.attached && (
-                          <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-brand px-3 py-2 text-[13px] font-bold text-white">
+                        {canUpload && !doc.attached && (
+                          <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-brand px-3 py-2 text-[13px] font-bold text-white has-[:disabled]:opacity-50">
                             <Upload size={16} />
                             {busy ? "กำลังอัป…" : "แนบไฟล์"}
                             <input
                               type="file"
                               accept="application/pdf,image/jpeg,image/png,image/webp"
                               className="sr-only"
-                              disabled={busy}
+                              disabled={anyBusy}
                               onChange={(event) => {
                                 const file = event.target.files?.[0];
                                 event.target.value = "";
@@ -168,6 +213,68 @@ export default function LoanDetailPage() {
               })}
             </ul>
           </section>
+
+          {(canSubmit || canCancel) && (
+            <div className="fixed inset-x-0 bottom-0 z-20 border-t border-brand/10 bg-white/95 px-5 py-4 backdrop-blur">
+              <div className="mx-auto flex max-w-lg flex-col gap-3">
+                {isPreparing && !canSubmit && (
+                  <p className="text-center text-[12px] font-semibold text-brand-dark/55">
+                    แนบเอกสารจำเป็นให้ครบก่อนส่ง
+                  </p>
+                )}
+                {isPreparing && (
+                  <button
+                    type="button"
+                    disabled={anyBusy || !canSubmit}
+                    onClick={() => void onSubmit()}
+                    className="flex h-14 w-full items-center justify-center rounded-2xl bg-brand text-[16px] font-bold text-white disabled:bg-brand/35"
+                  >
+                    {actionBusy === "submit" ? "กำลังส่งเอกสาร…" : "ส่งเอกสาร"}
+                  </button>
+                )}
+                {canCancel && (
+                  <button
+                    type="button"
+                    disabled={anyBusy}
+                    onClick={() => setConfirmCancel(true)}
+                    className="flex h-12 w-full items-center justify-center rounded-2xl border border-danger/30 text-[15px] font-bold text-danger disabled:opacity-40"
+                  >
+                    {actionBusy === "cancel" ? "กำลังยกเลิก…" : "ยกเลิกคำขอ"}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {confirmCancel && (
+            <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/50 p-4">
+              <div className="w-full max-w-sm rounded-2xl bg-white px-6 py-6 text-center shadow-lg">
+                <p className="text-[16px] font-bold text-brand-dark">
+                  {isReviewing
+                    ? "ยืนยันยกเลิกคำขอที่รอการตรวจสอบ?"
+                    : "ยืนยันยกเลิกคำขอนี้?"}
+                </p>
+                <div className="mt-5 flex gap-3">
+                  <button
+                    type="button"
+                    disabled={anyBusy}
+                    onClick={() => setConfirmCancel(false)}
+                    className="flex h-12 flex-1 items-center justify-center rounded-2xl border border-brand/20 text-[15px] font-bold text-brand"
+                  >
+                    ไม่ยกเลิก
+                  </button>
+                  <button
+                    type="button"
+                    disabled={anyBusy}
+                    onClick={() => void onCancel()}
+                    className="flex h-12 flex-1 items-center justify-center rounded-2xl bg-danger text-[15px] font-bold text-white"
+                  >
+                    ยืนยันยกเลิก
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

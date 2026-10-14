@@ -7,7 +7,7 @@ import { Suspense, useEffect, useState } from "react";
 import { IdCard } from "lucide-react";
 import { apiMessage, formatNationalId, loginByNationalId } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { isLiffConfigured } from "@/lib/liff";
+import { shouldUseLiffAuth } from "@/lib/liff";
 
 function LoginForm() {
   const { session, ready, setSession } = useAuth();
@@ -18,13 +18,13 @@ function LoginForm() {
   const [nationalId, setNationalId] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const lineReady = isLiffConfigured();
+  const lineReady = shouldUseLiffAuth();
 
   useEffect(() => {
     if (ready && session) router.replace(next);
   }, [ready, session, router, next]);
 
-  // Prefer LINE when LIFF is set. Use /login?direct=1 for browser national-id login.
+  // Prefer LINE only when this origin matches the LIFF Endpoint (not localhost).
   useEffect(() => {
     if (!ready || session || !lineReady || forceDirect) return;
     router.replace(`/line?next=${encodeURIComponent(next)}`);

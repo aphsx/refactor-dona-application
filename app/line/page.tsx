@@ -11,6 +11,7 @@ import {
   ensureLiffLoggedIn,
   getLiffIdToken,
   isLiffConfigured,
+  isLiffEndpointCompatible,
   stashLineIdToken,
 } from "@/lib/liff";
 
@@ -35,6 +36,12 @@ function LineEntry() {
     if (!isLiffConfigured()) {
       setError("ยังไม่ได้ตั้งค่า NEXT_PUBLIC_LIFF_ID");
       setPhase("error");
+      return;
+    }
+
+    // Localhost / wrong origin → LIFF shows a native "400 Bad Request" alert.
+    if (!isLiffEndpointCompatible()) {
+      router.replace(`/login?direct=1&next=${encodeURIComponent(next)}`);
       return;
     }
 
