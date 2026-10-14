@@ -105,7 +105,11 @@ function LineLinkForm() {
             href={`/line?next=${encodeURIComponent(next)}`}
             className="font-bold text-brand underline-offset-2 hover:underline"
           >
-            เริ่มใช้งานด้วย LINE
+            ลงทะเบียนด้วย LINE
+          </Link>
+          {" · "}
+          <Link href="/register" className="font-bold text-brand underline-offset-2 hover:underline">
+            ลงทะเบียน
           </Link>
         </p>
       </div>

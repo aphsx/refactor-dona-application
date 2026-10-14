@@ -9,7 +9,13 @@ export {
   setSession,
 } from "@/lib/api/client";
 
-export { linkLineAccount, loginByLine, loginByNationalId, registerFarmer } from "@/lib/api/auth";
+export {
+  linkLineAccount,
+  loginByLine,
+  loginByNationalId,
+  registerFarmer,
+  registerFarmerWithLine,
+} from "@/lib/api/auth";
 
 export { listNamePrefixes } from "@/lib/api/name-prefixes";
 

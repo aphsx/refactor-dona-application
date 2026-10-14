@@ -2,25 +2,44 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import {
   apiMessage,
   formatNationalId,
   listNamePrefixes,
   registerFarmer,
+  registerFarmerWithLine,
   type NamePrefix,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import {
+  clearLineIdToken,
+  ensureLiffLoggedIn,
+  getLiffIdToken,
+  getLiffProfileHint,
+  peekLineIdToken,
+  stashLineIdToken,
+} from "@/lib/liff";
 import {
   districtOptions,
   provinceOptions,
   subdistrictOptions,
 } from "@/lib/thai-place";
 
-export default function RegisterPage() {
+function splitDisplayName(raw: string): { firstName: string; lastName: string } {
+  const parts = raw.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return { firstName: "", lastName: "" };
+  if (parts.length === 1) return { firstName: parts[0], lastName: "" };
+  return { firstName: parts[0], lastName: parts.slice(1).join(" ") };
+}
+
+function RegisterForm() {
   const { session, ready, setSession } = useAuth();
   const router = useRouter();
+  const search = useSearchParams();
+  const viaLine = search.get("via") === "line";
+  const next = search.get("next") || "/home";
 
   const [prefixes, setPrefixes] = useState<NamePrefix[]>([]);
   const [prefixId, setPrefixId] = useState(0);
@@ -33,12 +52,15 @@ export default function RegisterPage() {
   const [provinceId, setProvinceId] = useState(0);
   const [districtId, setDistrictId] = useState(0);
   const [subdistrictId, setSubdistrictId] = useState(0);
+  const [linePicture, setLinePicture] = useState("");
+  const [lineDisplayName, setLineDisplayName] = useState("");
+  const [lineReady, setLineReady] = useState(!viaLine);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (ready && session) router.replace("/home");
-  }, [ready, session, router]);
+    if (ready && session) router.replace(next);
+  }, [ready, session, router, next]);
 
   useEffect(() => {
     void (async () => {
@@ -47,7 +69,6 @@ export default function RegisterPage() {
         setPrefixes(items);
         if (items.length > 0) setPrefixId((current) => current || items[0].id);
       } catch {
-        // Prefixed defaults still work if catalog is briefly unavailable.
         setPrefixes([
           { id: 601, name: "นาย" },
           { id: 602, name: "นาง" },
@@ -59,6 +80,44 @@ export default function RegisterPage() {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    if (!viaLine) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const loggedIn = await ensureLiffLoggedIn(
+          typeof window !== "undefined" ? window.location.href : undefined,
+        );
+        if (!loggedIn || cancelled) return;
+        const token = getLiffIdToken() || peekLineIdToken();
+        if (!token) {
+          setError("ไม่พบสิทธิ์ LINE — กลับไปเปิดจาก LINE อีกครั้ง");
+          setLineReady(false);
+          return;
+        }
+        stashLineIdToken(token);
+        const hint = await getLiffProfileHint();
+        if (cancelled) return;
+        if (hint) {
+          setLineDisplayName(hint.displayName);
+          setLinePicture(hint.pictureUrl);
+          const split = splitDisplayName(hint.displayName);
+          setFirstName((current) => current || split.firstName);
+          setLastName((current) => current || split.lastName);
+        }
+        setLineReady(true);
+      } catch (err) {
+        if (!cancelled) {
+          setError(apiMessage(err));
+          setLineReady(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [viaLine]);
 
   const districts = useMemo(() => districtOptions(provinceId), [provinceId]);
   const subdistricts = useMemo(
@@ -75,7 +134,8 @@ export default function RegisterPage() {
     address.trim() &&
     provinceId > 0 &&
     districtId > 0 &&
-    subdistrictId > 0;
+    subdistrictId > 0 &&
+    (!viaLine || lineReady);
 
   return (
     <div className="mx-auto min-h-full w-full max-w-lg bg-brand-light px-6 py-10">
@@ -89,12 +149,35 @@ export default function RegisterPage() {
           priority
         />
         <h1 className="mt-5 text-center text-[26px] font-bold text-brand-dark">
-          ลงทะเบียนเกษตรกร
+          {viaLine ? "ลงทะเบียนด้วย LINE" : "ลงทะเบียนเกษตรกร"}
         </h1>
         <p className="mt-2 text-center text-[15px] text-brand-dark/70">
-          กรอกข้อมูลเพื่อเริ่มใช้งานด้วยตัวเอง
+          {viaLine
+            ? "LINE ผูกบัญชีให้ — กรอกข้อมูลเกษตรกรให้ครบเหมือนระบบจัดการ"
+            : "กรอกข้อมูลเกษตรกรเพื่อสร้างบัญชีใหม่"}
         </p>
       </div>
+
+      {viaLine && lineReady && (lineDisplayName || linePicture) && (
+        <div className="mt-6 flex items-center gap-3 rounded-2xl border border-brand/15 bg-white px-4 py-3">
+          {linePicture ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={linePicture} alt="" className="h-12 w-12 rounded-full object-cover" />
+          ) : (
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand/10 text-[14px] font-bold text-brand">
+              LINE
+            </span>
+          )}
+          <div className="min-w-0">
+            <p className="truncate text-[15px] font-bold text-brand-dark">{lineDisplayName || "บัญชี LINE"}</p>
+            <p className="text-[12px] text-brand-dark/55">จาก LINE — ตรวจชื่อด้านล่างให้ถูกต้อง</p>
+          </div>
+        </div>
+      )}
+
+      {viaLine && !lineReady && !error && (
+        <p className="mt-6 text-center text-[14px] text-brand-dark/60">กำลังเชื่อม LINE…</p>
+      )}
 
       <form
         className="mt-8 space-y-3"
@@ -105,7 +188,7 @@ export default function RegisterPage() {
             setBusy(true);
             setError("");
             try {
-              const next = await registerFarmer({
+              const body = {
                 prefixId,
                 firstName: firstName.trim(),
                 lastName: lastName.trim(),
@@ -116,9 +199,13 @@ export default function RegisterPage() {
                 provinceId,
                 districtId,
                 subdistrictId,
-              });
-              setSession(next);
-              router.replace("/home");
+              };
+              const sessionNext = viaLine
+                ? await registerFarmerWithLine(getLiffIdToken() || peekLineIdToken() || "", body)
+                : await registerFarmer(body);
+              if (viaLine) clearLineIdToken();
+              setSession(sessionNext);
+              router.replace(next);
             } catch (err) {
               setError(apiMessage(err));
             } finally {
@@ -153,11 +240,7 @@ export default function RegisterPage() {
           type="date"
           required
         />
-        <Field
-          label="เลขเกษตรกร"
-          value={farmerNumber}
-          onChange={setFarmerNumber}
-        />
+        <Field label="เลขเกษตรกร" value={farmerNumber} onChange={setFarmerNumber} />
         <Field label="ที่อยู่" value={address} onChange={setAddress} required />
 
         <SelectField
@@ -195,7 +278,9 @@ export default function RegisterPage() {
         />
 
         <p className="rounded-2xl bg-white/70 px-3.5 py-3 text-[13px] leading-relaxed text-brand-dark/55">
-          หลังลงทะเบียนจะเข้าใช้งานได้ทันที · องค์กรสามารถจัดกลุ่มให้ทีหลัง
+          {viaLine
+            ? "บันทึกแล้วจะผูก LINE กับบัญชีนี้ · องค์กรจัดกลุ่มให้ทีหลังได้"
+            : "หลังลงทะเบียนจะเข้าใช้งานได้ทันที · องค์กรสามารถจัดกลุ่มให้ทีหลัง"}
         </p>
 
         {error && <p className="text-center text-[14px] font-semibold text-danger">{error}</p>}
@@ -205,7 +290,7 @@ export default function RegisterPage() {
           disabled={busy || !canSubmit}
           className="flex h-14 w-full items-center justify-center rounded-2xl bg-brand text-[16px] font-bold text-white shadow disabled:bg-brand/35"
         >
-          {busy ? "กำลังลงทะเบียน…" : "ลงทะเบียน"}
+          {busy ? "กำลังลงทะเบียน…" : viaLine ? "บันทึกและเข้าใช้งาน" : "ลงทะเบียน"}
         </button>
       </form>
 
@@ -216,6 +301,20 @@ export default function RegisterPage() {
         </Link>
       </p>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-full items-center justify-center bg-brand-light text-brand-dark/60">
+          กำลังโหลด…
+        </div>
+      }
+    >
+      <RegisterForm />
+    </Suspense>
   );
 }
 

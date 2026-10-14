@@ -14,7 +14,7 @@ import {
   stashLineIdToken,
 } from "@/lib/liff";
 
-type Phase = "boot" | "choose" | "creating" | "error";
+type Phase = "boot" | "choose" | "error";
 
 function LineEntry() {
   const { ready, session, setSession } = useAuth();
@@ -23,7 +23,6 @@ function LineEntry() {
   const next = search.get("next") || "/home";
   const [phase, setPhase] = useState<Phase>("boot");
   const [error, setError] = useState("");
-  const [idToken, setIdToken] = useState("");
 
   useEffect(() => {
     if (!ready) return;
@@ -53,9 +52,8 @@ function LineEntry() {
           setPhase("error");
           return;
         }
-        setIdToken(token);
 
-        // Probe without creating — existing LINE users enter immediately.
+        // Existing LINE users enter immediately; new users choose how to register.
         const result = await loginByLine(token, false);
         if (cancelled) return;
 
@@ -66,7 +64,6 @@ function LineEntry() {
           return;
         }
 
-        // New LINE user: choose create vs link existing phone account.
         stashLineIdToken(token);
         setPhase("choose");
       } catch (err) {
@@ -81,29 +78,6 @@ function LineEntry() {
       cancelled = true;
     };
   }, [ready, session, router, next, setSession]);
-
-  async function startWithLine() {
-    const token = idToken || getLiffIdToken();
-    if (!token) {
-      setError("ไม่พบสิทธิ์ LINE — เปิดใหม่อีกครั้ง");
-      setPhase("error");
-      return;
-    }
-    setPhase("creating");
-    setError("");
-    try {
-      const result = await loginByLine(token, true);
-      if (result.status !== "ok") {
-        throw new Error("สร้างบัญชีไม่สำเร็จ");
-      }
-      clearLineIdToken();
-      setSession(result.session);
-      router.replace(next);
-    } catch (err) {
-      setError(apiMessage(err));
-      setPhase("error");
-    }
-  }
 
   return (
     <div className="mx-auto flex min-h-full w-full max-w-lg flex-col items-center justify-center bg-brand-light px-6 py-10">
@@ -129,28 +103,30 @@ function LineEntry() {
         <div className="mt-8 w-full">
           <h1 className="text-center text-[24px] font-bold text-brand-dark">ยินดีต้อนรับ</h1>
           <p className="mt-2 text-center text-[14px] text-brand-dark/65">
-            เข้าใช้งานด้วย LINE ได้เลย หรือผูกเลขบัตรประชาชนหากเคยลงทะเบียนไว้แล้ว
+            ยังไม่มีบัญชี — ลงทะเบียนด้วย LINE แล้วกรอกข้อมูลเกษตรกร หรือกรอกเองทั้งหมด
           </p>
-          <button
-            type="button"
-            onClick={() => void startWithLine()}
+          <Link
+            href={`/register?via=line&next=${encodeURIComponent(next)}`}
             className="mt-8 flex h-14 w-full items-center justify-center rounded-2xl bg-brand text-[16px] font-bold text-white shadow"
           >
-            เริ่มใช้งานด้วย LINE
-          </button>
+            ลงทะเบียนด้วย LINE
+          </Link>
           <Link
-            href={`/line/link?next=${encodeURIComponent(next)}`}
+            href="/register"
             className="mt-3 flex h-14 w-full items-center justify-center rounded-2xl border border-brand/20 bg-white text-[15px] font-bold text-brand"
           >
-            เคยลงทะเบียนด้วยเลขบัตรแล้ว — ผูกบัญชี
+            ลงทะเบียน
           </Link>
+          <p className="mt-6 text-center text-[13px] text-brand-dark/55">
+            มีบัญชีจากเลขบัตรแล้ว?{" "}
+            <Link
+              href={`/line/link?next=${encodeURIComponent(next)}`}
+              className="font-bold text-brand underline-offset-2 hover:underline"
+            >
+              ผูกบัญชีกับ LINE
+            </Link>
+          </p>
         </div>
-      )}
-
-      {phase === "creating" && (
-        <p className="mt-8 text-center text-[16px] font-semibold text-brand-dark">
-          กำลังสร้างบัญชี…
-        </p>
       )}
 
       {phase === "error" && (

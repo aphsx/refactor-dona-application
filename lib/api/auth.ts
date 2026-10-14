@@ -30,8 +30,8 @@ export type LineLoginResult =
   | { status: "ok"; session: FarmerSession }
   | { status: "not_found" };
 
-/** LIFF id_token login. createIfMissing=true auto-registers from LINE profile. */
-export async function loginByLine(idToken: string, createIfMissing = true): Promise<LineLoginResult> {
+/** LIFF id_token login. Never auto-creates — new users get not_found → register form. */
+export async function loginByLine(idToken: string, createIfMissing = false): Promise<LineLoginResult> {
   const data = await apiRequest<FarmerSession | { status: string }>("/auth/line", {
     method: "POST",
     body: JSON.stringify({ idToken, createIfMissing }),
@@ -57,6 +57,19 @@ export async function registerFarmer(input: FarmerRegisterInput) {
   const data = await apiRequest<FarmerSession>("/auth/register", {
     method: "POST",
     body: JSON.stringify({
+      ...input,
+      nationalId: input.nationalId.replace(/\D/g, ""),
+    }),
+  });
+  return toSession(data);
+}
+
+/** Full farmer register + bind LINE (same required fields as mill /auth/register). */
+export async function registerFarmerWithLine(idToken: string, input: FarmerRegisterInput) {
+  const data = await apiRequest<FarmerSession>("/auth/register/line", {
+    method: "POST",
+    body: JSON.stringify({
+      idToken,
       ...input,
       nationalId: input.nationalId.replace(/\D/g, ""),
     }),

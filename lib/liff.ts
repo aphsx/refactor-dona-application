@@ -66,3 +66,23 @@ export function clearLineIdToken() {
   if (typeof window === "undefined") return;
   sessionStorage.removeItem(ID_TOKEN_KEY);
 }
+
+export type LiffProfileHint = {
+  displayName: string;
+  pictureUrl: string;
+};
+
+/** Best-effort LINE profile for pre-filling register form (user still confirms/edits). */
+export async function getLiffProfileHint(): Promise<LiffProfileHint | null> {
+  try {
+    const ready = await ensureLiff();
+    if (!ready || !liff.isLoggedIn()) return null;
+    const profile = await liff.getProfile();
+    return {
+      displayName: profile.displayName?.trim() || "",
+      pictureUrl: profile.pictureUrl?.trim() || "",
+    };
+  } catch {
+    return null;
+  }
+}
