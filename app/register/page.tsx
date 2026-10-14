@@ -57,7 +57,7 @@ function RegisterForm() {
   const [lineDisplayName, setLineDisplayName] = useState("");
   const [lineReady, setLineReady] = useState(!viaLine);
   const [error, setError] = useState("");
-  const [identityConflict, setIdentityConflict] = useState(false);
+  const [conflictAlert, setConflictAlert] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -202,7 +202,7 @@ function RegisterForm() {
                 districtId,
                 subdistrictId,
               };
-              setIdentityConflict(false);
+              setConflictAlert(null);
               const sessionNext = viaLine
                 ? await registerFarmerWithLine(getLiffIdToken() || peekLineIdToken() || "", body)
                 : await registerFarmer(body);
@@ -210,12 +210,11 @@ function RegisterForm() {
               setSession(sessionNext);
               router.replace(next);
             } catch (err) {
-              setError(apiMessage(err));
-              const conflict =
-                viaLine &&
-                err instanceof ApiError &&
-                err.status === 409;
-              setIdentityConflict(conflict);
+              const message = apiMessage(err);
+              setError(message);
+              if (viaLine && err instanceof ApiError && err.status === 409) {
+                setConflictAlert(message);
+              }
             } finally {
               setBusy(false);
             }
@@ -291,15 +290,8 @@ function RegisterForm() {
             : "หลังลงทะเบียนจะเข้าใช้งานได้ทันที · องค์กรสามารถจัดกลุ่มให้ทีหลัง"}
         </p>
 
-        {error && <p className="text-center text-[14px] font-semibold text-danger">{error}</p>}
-
-        {identityConflict && (
-          <Link
-            href={`/line/link?next=${encodeURIComponent(next)}&nationalId=${encodeURIComponent(nationalId.replace(/\D/g, ""))}`}
-            className="flex h-14 w-full items-center justify-center rounded-2xl border border-brand/20 bg-white text-[15px] font-bold text-brand"
-          >
-            ไปผูกบัญชีกับ LINE
-          </Link>
+        {error && !conflictAlert && (
+          <p className="text-center text-[14px] font-semibold text-danger">{error}</p>
         )}
 
         <button
@@ -317,6 +309,34 @@ function RegisterForm() {
           เข้าสู่ระบบ
         </Link>
       </p>
+
+      {conflictAlert && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-6">
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="identity-conflict-title"
+            className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-lg"
+          >
+            <h2 id="identity-conflict-title" className="text-center text-[18px] font-bold text-brand-dark">
+              มีผู้ใช้นี้อยู่แล้ว
+            </h2>
+            <p className="mt-3 text-center text-[14px] leading-relaxed text-brand-dark/75">
+              {conflictAlert}
+            </p>
+            <p className="mt-2 text-center text-[14px] leading-relaxed text-brand-dark/75">
+              กรุณากลับหน้าเข้าสู่ระบบ แล้วเลือก「ผูกบัญชีกับ LINE」
+            </p>
+            <button
+              type="button"
+              onClick={() => setConflictAlert(null)}
+              className="mt-5 flex h-12 w-full items-center justify-center rounded-2xl bg-brand text-[15px] font-bold text-white"
+            >
+              ตกลง
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
