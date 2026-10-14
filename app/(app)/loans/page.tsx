@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ChevronRight, FilePlus2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { formatBaht, loanCtaLinkClass, loanStatusTone } from "@/components/loan-ui";
 import {
   apiMessage,
   formatThaiDate,
@@ -12,9 +13,7 @@ import {
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
-function formatBaht(value: number) {
-  return Number(value).toLocaleString("th-TH");
-}
+const LOAN_APPLICATION_STATUS_REVIEWING_ID = 902;
 
 export default function LoansPage() {
   const { session } = useAuth();
@@ -39,37 +38,46 @@ export default function LoansPage() {
     <div className="relative min-h-full pb-10">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[280px] bg-[radial-gradient(120%_80%_at_10%_-10%,#1d8a6a_0%,#0f493b_50%,transparent_72%)]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[220px] bg-[radial-gradient(120%_80%_at_10%_-10%,#1d8a6a_0%,#0f493b_55%,transparent_72%)]"
       />
 
       <header className="relative px-5 pt-8">
         <p className="text-[12px] font-semibold tracking-[0.18em] text-white/70 uppercase">dona</p>
         <h1 className="mt-1 text-[28px] font-bold leading-tight text-white">สินเชื่อ</h1>
-        <p className="mt-2 max-w-sm text-[14px] text-white/75">
-          กรอกรายละเอียดและแนบเอกสารให้ครบ แล้วส่งครั้งเดียวเข้าสู่รอการตรวจสอบ
-        </p>
+        <p className="mt-2 max-w-sm text-[14px] text-white/75">ยื่นคำขอและติดตามสถานะได้ที่นี่</p>
       </header>
 
       <section className="relative mt-6 px-5">
-        <Link
-          href="/loans/apply"
-          className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-accent text-[16px] font-bold text-brand-dark shadow-[0_12px_28px_rgba(15,73,59,0.25)]"
-        >
+        <Link href="/loans/apply" className={loanCtaLinkClass}>
           <FilePlus2 size={20} />
           ขอสินเชื่อใหม่
         </Link>
       </section>
 
       <section className="relative mt-8 px-5">
-        <h2 className="text-[16px] font-bold text-brand-dark">คำขอของฉัน</h2>
-        {loading && <p className="mt-4 text-[14px] text-brand-dark/50">กำลังโหลด…</p>}
-        {!loading && error && <p className="mt-4 text-[14px] font-semibold text-danger">{error}</p>}
-        {!loading && !error && items.length === 0 && (
-          <p className="mt-4 text-[14px] text-brand-dark/50">ยังไม่มีคำขอ — กดปุ่มด้านบนเพื่อเริ่ม</p>
+        <div className="mb-3 flex items-end justify-between gap-3">
+          <h2 className="text-[16px] font-bold text-brand-dark">คำขอของฉัน</h2>
+          <span className="text-[13px] font-semibold text-brand-dark/45">
+            {loading ? "กำลังโหลด…" : `${items.length} รายการ`}
+          </span>
+        </div>
+
+        {error && (
+          <p className="mb-3 rounded-2xl bg-red-50 px-4 py-3 text-[14px] font-semibold text-danger">
+            {error}
+          </p>
         )}
-        <ul className="mt-3 space-y-3">
+
+        {!loading && !error && items.length === 0 && (
+          <p className="rounded-2xl bg-white px-4 py-8 text-center text-[14px] text-brand-dark/50 shadow-sm ring-1 ring-brand/10">
+            ยังไม่มีคำขอ — กดปุ่มด้านบนเพื่อเริ่ม
+          </p>
+        )}
+
+        <ul className="space-y-3">
           {items.map((row) => {
             const docs = loanRequiredDocumentProgress(row.documents ?? []);
+            const showDocs = row.statusId === LOAN_APPLICATION_STATUS_REVIEWING_ID;
             return (
               <li key={row.id}>
                 <Link
@@ -78,22 +86,22 @@ export default function LoansPage() {
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="truncate text-[16px] font-bold text-brand-dark">
+                      <p className="truncate text-[16px] font-bold tabular-nums text-brand-dark">
                         {formatBaht(row.requestedAmount)} บาท
                       </p>
-                      <span className="shrink-0 rounded-lg bg-brand-light px-2 py-0.5 text-[12px] font-semibold text-brand">
+                      <span
+                        className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${loanStatusTone(row.status?.name || "")}`}
+                      >
                         {row.status?.name || "—"}
                       </span>
                     </div>
                     <p className="mt-1 truncate text-[13px] text-brand-dark/55">
                       {row.purpose?.trim() || "ไม่ระบุวัตถุประสงค์"} ·{" "}
                       {formatThaiDate(row.submittedOn?.slice(0, 10) || "")}
-                    </p>
-                    <p className="mt-1 text-[13px] font-semibold text-brand-dark/70">
-                      เอกสาร {docs.attached}/{docs.total}
+                      {showDocs ? ` · เอกสาร ${docs.attached}/${docs.total}` : ""}
                     </p>
                   </div>
-                  <ChevronRight size={18} className="shrink-0 text-brand/50" />
+                  <ChevronRight size={18} className="shrink-0 text-brand/40" />
                 </Link>
               </li>
             );
