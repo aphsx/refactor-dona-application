@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
 
   const avatarUrl = `${supabase.url}/storage/v1/object/public/${BUCKET}/${path}`;
   const apiOrigin = getApiOrigin();
-  const save = await fetch(`${apiOrigin}/api/v1/farmers/${encodeURIComponent(farmerId)}/avatar`, {
+  const save = await fetch(`${apiOrigin}/api/v1/application/farmers/${encodeURIComponent(farmerId)}/avatar`, {
     method: "PUT",
     headers: {
       Authorization: auth,

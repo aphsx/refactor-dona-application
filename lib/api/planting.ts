@@ -6,5 +6,5 @@ export async function getMyPlantingPlan(opts?: { plotId?: string; farmerId?: str
   if (opts?.plotId) params.set("plotId", opts.plotId);
   if (opts?.farmerId) params.set("farmerId", opts.farmerId);
   const qs = params.toString();
-  return apiRequest<PlantingPlan>(`/me/planting-plan${qs ? `?${qs}` : ""}`);
+  return apiRequest<PlantingPlan>(`/planting-plan${qs ? `?${qs}` : ""}`);
 }

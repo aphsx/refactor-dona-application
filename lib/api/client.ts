@@ -9,8 +9,17 @@ export class ApiError extends Error {
   }
 }
 
-const BASE = "/api/v1";
+const API_ROOT = "/api/v1";
+const SURFACE = "/application";
 const SESSION_KEY = "dona.farmer.session";
+
+/** Auth + public catalog stay at /api/v1; everything else is /api/v1/application. */
+function resolvePath(path: string): string {
+  if (path.startsWith("/auth") || path === "/name-prefixes" || path.startsWith("/name-prefixes?")) {
+    return `${API_ROOT}${path}`;
+  }
+  return `${API_ROOT}${SURFACE}${path}`;
+}
 
 let accessToken = "";
 
@@ -58,7 +67,7 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
 
   let response: Response;
   try {
-    response = await fetch(`${BASE}${path}`, { ...init, headers });
+    response = await fetch(resolvePath(path), { ...init, headers });
   } catch {
     throw new ApiError("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (ตรวจว่า API รันที่ :8080)", 0);
   }

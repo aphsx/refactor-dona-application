@@ -14,7 +14,7 @@ export async function listGroupPlots(groupId: string) {
 /** Fast farmer-app plot list (no boundary GeoJSON). scope: mine | group */
 export async function getMyPlots(scope: "mine" | "group" = "mine") {
   const data = await apiRequest<{ items: PlotCard[]; scope: string }>(
-    `/me/plots?scope=${encodeURIComponent(scope)}`,
+    `/plots/me?scope=${encodeURIComponent(scope)}`,
   );
   return data.items ?? [];
 }
