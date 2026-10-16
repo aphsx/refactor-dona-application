@@ -14,7 +14,7 @@ const NAV = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const hideNav = pathname.startsWith("/plots/register");
+  const hideNav = pathname.startsWith("/plots/register") || pathname.startsWith("/shop/cart");
   return (
     <div className="mx-auto flex h-full min-h-0 w-full max-w-lg flex-col bg-brand-light">
       <main

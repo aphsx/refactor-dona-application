@@ -13,9 +13,12 @@ const API_ROOT = "/api/v1";
 const SURFACE = "/application";
 const SESSION_KEY = "dona.farmer.session";
 
-/** Auth + public catalog stay at /api/v1; everything else is /api/v1/application. */
+/** Auth + public catalog at /api/v1; shop buyer at /api/v1/shop; rest under /application. */
 function resolvePath(path: string): string {
   if (path.startsWith("/auth") || path === "/name-prefixes" || path.startsWith("/name-prefixes?")) {
+    return `${API_ROOT}${path}`;
+  }
+  if (path === "/shop" || path.startsWith("/shop/")) {
     return `${API_ROOT}${path}`;
   }
   return `${API_ROOT}${SURFACE}${path}`;
