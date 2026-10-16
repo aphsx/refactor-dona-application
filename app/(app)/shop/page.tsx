@@ -112,25 +112,35 @@ export default function ShopPage() {
         <ul className="space-y-3">
           {products.map((p) => (
             <li key={p.id} className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-brand/10">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <p className="text-[16px] font-bold text-brand-dark">{p.name}</p>
-                  {p.description ? (
-                    <p className="mt-1 line-clamp-2 text-[13px] text-brand-dark/55">{p.description}</p>
-                  ) : null}
-                  <p className="mt-2 text-[15px] font-bold tabular-nums text-brand">
-                    {formatBahtFromSatang(p.priceSatang)}
-                  </p>
-                  <p className="mt-0.5 text-[12px] text-brand-dark/45">คงเหลือ {p.stockQty}</p>
+              <div className="flex items-start gap-3">
+                {p.imagePath ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={p.imagePath}
+                    alt=""
+                    className="h-20 w-20 shrink-0 rounded-xl object-cover bg-brand/5 ring-1 ring-brand/10"
+                  />
+                ) : null}
+                <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[16px] font-bold text-brand-dark">{p.name}</p>
+                    {p.description ? (
+                      <p className="mt-1 line-clamp-2 text-[13px] text-brand-dark/55">{p.description}</p>
+                    ) : null}
+                    <p className="mt-2 text-[15px] font-bold tabular-nums text-brand">
+                      {formatBahtFromSatang(p.priceSatang)}
+                    </p>
+                    <p className="mt-0.5 text-[12px] text-brand-dark/45">คงเหลือ {p.stockQty}</p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={busyId === p.id || p.stockQty <= 0}
+                    onClick={() => void addToCart(p)}
+                    className="shrink-0 rounded-xl bg-brand px-3 py-2 text-[13px] font-bold text-white disabled:opacity-40"
+                  >
+                    {p.stockQty <= 0 ? "หมด" : busyId === p.id ? "…" : "ใส่ตะกร้า"}
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  disabled={busyId === p.id || p.stockQty <= 0}
-                  onClick={() => void addToCart(p)}
-                  className="shrink-0 rounded-xl bg-brand px-3 py-2 text-[13px] font-bold text-white disabled:opacity-40"
-                >
-                  {p.stockQty <= 0 ? "หมด" : busyId === p.id ? "…" : "ใส่ตะกร้า"}
-                </button>
               </div>
             </li>
           ))}
